@@ -1,6 +1,6 @@
 # test_DEUTSCH_start
 
-Подготовка к немецкому экзамену: модули Hören, Lesen, Schreiben, Sprechen (Flutter).
+ Hören, Lesen, Schreiben, Sprechen (Flutter).
 
 ## Quick start
 
