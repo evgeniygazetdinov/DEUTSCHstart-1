@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../data/hoeren_glossary.dart';
+import '../utils/utf16_sanitize.dart';
 
 /// Подстановка перевода из сети, если слова нет в локальном словаре.
 /// Публичный API MyMemory; есть суточные лимиты — результат кэшируется в памяти.
@@ -51,7 +52,8 @@ class HoerenOnlineTranslate {
       if (rd is! Map<String, dynamic>) return null;
       final text = rd['translatedText'] as String?;
       if (text == null || text.isEmpty) return null;
-      final cleaned = text.trim();
+      final cleaned = sanitizeWellFormedUtf16(text.trim());
+      if (cleaned.isEmpty) return null;
       if (_cache.length >= _maxCache) {
         _cache.remove(_cache.keys.first);
       }

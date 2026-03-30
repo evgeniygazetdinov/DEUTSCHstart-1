@@ -21,13 +21,9 @@ sealed class HoerenExercise {
   final Map<String, String> wordHints;
 }
 
-/// Три варианта A–C (подписи с эмодзи).
-final class HoerenPictureExercise extends HoerenExercise {
-  const HoerenPictureExercise({
-    required super.teil,
-    required super.title,
-    required super.hortext,
-    super.wordHints = const {},
+/// Один вопрос с вариантами A–C к общему Hörtext.
+final class HoerenPictureRound {
+  const HoerenPictureRound({
     required this.question,
     required this.options,
     required this.correctIndex,
@@ -38,6 +34,20 @@ final class HoerenPictureExercise extends HoerenExercise {
   final List<String> options;
   final int correctIndex;
   final String explanation;
+}
+
+/// Три варианта A–C (подписи с эмодзи); обычно 6 раундов после [expandHoerenToSixSteps].
+final class HoerenPictureExercise extends HoerenExercise {
+  const HoerenPictureExercise({
+    required super.teil,
+    required super.title,
+    required super.hortext,
+    super.wordHints = const {},
+    required this.rounds,
+  });
+
+  /// Не пустой список; при загрузке [expandPictureToSixRounds] берёт [rounds.first].
+  final List<HoerenPictureRound> rounds;
 }
 
 /// Несколько утверждений richtig / falsch к одному Hörtext.
@@ -96,15 +106,19 @@ List<HoerenExercise> allHoerenExercises() {
       hortext:
           'Mann: Guten Morgen! Was darf es sein? '
           'Frau: Ich hätte gerne ein Brötchen und einen Kaffee. Ach, und bitte noch eine Zeitung.',
-      question: 'Was kauft die Frau?',
-      options: [
-        'A) 🥖🍞 nur Brot',
-        'B) ☕📰 Kaffee und Zeitung',
-        'C) 🥖☕📰 Brötchen, Kaffee und Zeitung',
+      rounds: [
+        HoerenPictureRound(
+          question: 'Was kauft die Frau?',
+          options: [
+            'A) 🥖🍞 nur Brot',
+            'B) ☕📰 Kaffee und Zeitung',
+            'C) 🥖☕📰 Brötchen, Kaffee und Zeitung',
+          ],
+          correctIndex: 2,
+          explanation:
+              'Sie sagt: Brötchen, Kaffee und Zeitung — alle drei Dinge.',
+        ),
       ],
-      correctIndex: 2,
-      explanation:
-          'Sie sagt: Brötchen, Kaffee und Zeitung — alle drei Dinge.',
     ),
     const HoerenPictureExercise(
       teil: 'Teil 1',
@@ -112,14 +126,18 @@ List<HoerenExercise> allHoerenExercises() {
       hortext:
           'Mann: Du siehst müde aus. Was ist los? '
           'Frau: Ich habe Kopfschmerzen und mein Rücken tut weh. Ich gehe heute früher nach Hause.',
-      question: 'Was hat die Frau?',
-      options: [
-        'A) 🤕 Kopfschmerzen',
-        'B) 🤒 Fieber',
-        'C) 🤕 Rückenschmerzen (Kopf und Rücken)',
+      rounds: [
+        HoerenPictureRound(
+          question: 'Was hat die Frau?',
+          options: [
+            'A) 🤕 Kopfschmerzen',
+            'B) 🤒 Fieber',
+            'C) 🤕 Rückenschmerzen (Kopf und Rücken)',
+          ],
+          correctIndex: 2,
+          explanation: 'Sie nennt Kopfschmerzen und Rückenschmerzen.',
+        ),
       ],
-      correctIndex: 2,
-      explanation: 'Sie nennt Kopfschmerzen und Rückenschmerzen.',
     ),
     const HoerenPictureExercise(
       teil: 'Teil 1',
@@ -127,14 +145,18 @@ List<HoerenExercise> allHoerenExercises() {
       hortext:
           'Achtung, Fahrgäste. Der ICE nach München fährt um 14:45 Uhr ab. '
           'Leider hat der Zug 10 Minuten Verspätung.',
-      question: 'Wann fährt der Zug?',
-      options: [
-        'A) 14:35 Uhr',
-        'B) 14:45 Uhr',
-        'C) 14:55 Uhr',
+      rounds: [
+        HoerenPictureRound(
+          question: 'Wann fährt der Zug?',
+          options: [
+            'A) 14:35 Uhr',
+            'B) 14:45 Uhr',
+            'C) 14:55 Uhr',
+          ],
+          correctIndex: 2,
+          explanation: 'Plan: 14:45, plus 10 Minuten Verspätung = 14:55.',
+        ),
       ],
-      correctIndex: 2,
-      explanation: 'Plan: 14:45, plus 10 Minuten Verspätung = 14:55.',
     ),
     const HoerenPictureExercise(
       teil: 'Teil 1',
@@ -143,14 +165,18 @@ List<HoerenExercise> allHoerenExercises() {
           'Frau: Was kostet die Hose? '
           'Mann: 49,90 Euro. Möchten Sie sie anprobieren? '
           'Frau: Ja, gerne. Wo sind die Umkleidekabinen?',
-      question: 'Wo sind die Personen?',
-      options: [
-        'A) 🛒 Supermarkt',
-        'B) 👗 Bekleidungsgeschäft',
-        'C) 🍽️ Restaurant',
+      rounds: [
+        HoerenPictureRound(
+          question: 'Wo sind die Personen?',
+          options: [
+            'A) 🛒 Supermarkt',
+            'B) 👗 Bekleidungsgeschäft',
+            'C) 🍽️ Restaurant',
+          ],
+          correctIndex: 1,
+          explanation: 'Hose, anprobieren, Umkleidekabine → Kleidungsgeschäft.',
+        ),
       ],
-      correctIndex: 1,
-      explanation: 'Hose, anprobieren, Umkleidekabine → Kleidungsgeschäft.',
     ),
     const HoerenPictureExercise(
       teil: 'Teil 1',
@@ -158,14 +184,18 @@ List<HoerenExercise> allHoerenExercises() {
       hortext:
           'Frau: Hallo, bist du beschäftigt? '
           'Mann: Ja, ich muss noch zwei E-Mails schreiben und dann einen Termin vorbereiten.',
-      question: 'Was macht der Mann gerade?',
-      options: [
-        'A) Er telefoniert.',
-        'B) Er arbeitet am Computer.',
-        'C) Er isst zu Mittag.',
+      rounds: [
+        HoerenPictureRound(
+          question: 'Was macht der Mann gerade?',
+          options: [
+            'A) Er telefoniert.',
+            'B) Er arbeitet am Computer.',
+            'C) Er isst zu Mittag.',
+          ],
+          correctIndex: 1,
+          explanation: 'E-Mails und Termin vorbereiten → Büroarbeit am PC.',
+        ),
       ],
-      correctIndex: 1,
-      explanation: 'E-Mails und Termin vorbereiten → Büroarbeit am PC.',
     ),
     const HoerenRichtigFalschExercise(
       teil: 'Teil 2',
@@ -233,14 +263,18 @@ List<HoerenExercise> allHoerenExercises() {
           'Tochter: Papa, fahren wir an den See? '
           'Vater: Nein, wir fahren ans Meer. Das Wetter ist super. '
           'Mutter: Und nach dem Strand essen wir Eis.',
-      question: 'Wohin fährt die Familie?',
-      options: [
-        'A) 🏔️ In die Berge',
-        'B) 🌊 Ans Meer',
-        'C) 🏊 Ins Schwimmbad',
+      rounds: [
+        HoerenPictureRound(
+          question: 'Wohin fährt die Familie?',
+          options: [
+            'A) 🏔️ In die Berge',
+            'B) 🌊 Ans Meer',
+            'C) 🏊 Ins Schwimmbad',
+          ],
+          correctIndex: 1,
+          explanation: 'Ans Meer, Badesachen, Strand → Meer.',
+        ),
       ],
-      correctIndex: 1,
-      explanation: 'Ans Meer, Badesachen, Strand → Meer.',
     ),
     const HoerenPictureExercise(
       teil: 'Teil 3',
@@ -250,14 +284,18 @@ List<HoerenExercise> allHoerenExercises() {
           'Frau: Ja, bitte? '
           'Mann: Ich habe hier ein Zimmer reserviert für zwei Nächte. Aber das Zimmer ist sehr laut. Direkt neben der Straße. '
           'Frau: Das tut mir leid. Wir haben noch ein Zimmer im dritten Stock. Das ist ruhiger.',
-      question: 'Was ist das Problem?',
-      options: [
-        'A) Das Zimmer ist zu klein.',
-        'B) Das Zimmer ist zu teuer.',
-        'C) Das Zimmer ist zu laut.',
+      rounds: [
+        HoerenPictureRound(
+          question: 'Was ist das Problem?',
+          options: [
+            'A) Das Zimmer ist zu klein.',
+            'B) Das Zimmer ist zu teuer.',
+            'C) Das Zimmer ist zu laut.',
+          ],
+          correctIndex: 2,
+          explanation: 'Er sagt: Das Zimmer ist sehr laut.',
+        ),
       ],
-      correctIndex: 2,
-      explanation: 'Er sagt: Das Zimmer ist sehr laut.',
     ),
     const HoerenPictureExercise(
       teil: 'Teil 3',
@@ -266,14 +304,18 @@ List<HoerenExercise> allHoerenExercises() {
           'Frau: Was machst du am Wochenende? '
           'Mann: Am Samstag habe ich keine Zeit, ich muss arbeiten. Aber am Sonntag will ich mit Freunden ins Kino. Ein neuer Film mit Brad Pitt. '
           'Frau: Klingt gut!',
-      question: 'Was macht der Mann am Sonntag?',
-      options: [
-        'A) Er arbeitet.',
-        'B) Er geht ins Kino.',
-        'C) Er trifft Freunde im Café.',
+      rounds: [
+        HoerenPictureRound(
+          question: 'Was macht der Mann am Sonntag?',
+          options: [
+            'A) Er arbeitet.',
+            'B) Er geht ins Kino.',
+            'C) Er trifft Freunde im Café.',
+          ],
+          correctIndex: 1,
+          explanation: 'Am Sonntag ins Kino.',
+        ),
       ],
-      correctIndex: 1,
-      explanation: 'Am Sonntag ins Kino.',
     ),
     const HoerenPictureExercise(
       teil: 'Teil 3',
@@ -282,14 +324,18 @@ List<HoerenExercise> allHoerenExercises() {
           'Gast: Ich möchte ein Einzelzimmer für drei Nächte, bitte. '
           'Rezeptionist: Wir haben Zimmer 14 im ersten Stock zur Straße, oder Zimmer 22 im zweiten Stock zum Hof. Beide kosten 65 Euro pro Nacht. '
           'Gast: Ich nehme das Zimmer zum Hof. Das ist ruhiger.',
-      question: 'Welches Zimmer nimmt der Gast?',
-      options: [
-        'A) Zimmer 14, 1. Stock',
-        'B) Zimmer 22, 2. Stock',
-        'C) Zimmer 22, 1. Stock',
+      rounds: [
+        HoerenPictureRound(
+          question: 'Welches Zimmer nimmt der Gast?',
+          options: [
+            'A) Zimmer 14, 1. Stock',
+            'B) Zimmer 22, 2. Stock',
+            'C) Zimmer 22, 1. Stock',
+          ],
+          correctIndex: 1,
+          explanation: 'Zimmer zum Hof = Zimmer 22, zweiter Stock.',
+        ),
       ],
-      correctIndex: 1,
-      explanation: 'Zimmer zum Hof = Zimmer 22, zweiter Stock.',
     ),
     const HoerenOpenExercise(
       teil: 'Bonus',
@@ -357,9 +403,99 @@ List<HoerenExercise> allHoerenExercises() {
   ];
 }
 
-/// Копия списка в случайном порядке.
+const _kPicturePromptTail = <String>[
+  '(Wählen Sie A, B oder C.)',
+  '(Was passt am besten?)',
+  '(Was hören Sie im Text?)',
+  '(Welche Aussage ist richtig?)',
+  '(Was stimmt?)',
+  '(Entscheiden Sie: A, B oder C.)',
+];
+
+HoerenPictureExercise expandPictureToSixRounds(
+  HoerenPictureExercise e,
+  Random r,
+) {
+  if (e.rounds.isEmpty || e.rounds.length >= 6) return e;
+  final base = e.rounds.first;
+  final rounds = <HoerenPictureRound>[];
+  for (var i = 0; i < 6; i++) {
+    final q = i == 0
+        ? base.question
+        : '${base.question} ${_kPicturePromptTail[(i - 1) % _kPicturePromptTail.length]}';
+    final order = List<int>.generate(base.options.length, (j) => j)..shuffle(r);
+    final newOpts = order.map((j) => base.options[j]).toList();
+    final newCorrect = order.indexOf(base.correctIndex);
+    rounds.add(HoerenPictureRound(
+      question: q,
+      options: newOpts,
+      correctIndex: newCorrect,
+      explanation: base.explanation,
+    ));
+  }
+  return HoerenPictureExercise(
+    teil: e.teil,
+    title: e.title,
+    hortext: e.hortext,
+    wordHints: e.wordHints,
+    rounds: rounds,
+  );
+}
+
+HoerenRichtigFalschExercise expandRfToSixItems(
+  HoerenRichtigFalschExercise e,
+  Random r,
+) {
+  if (e.items.isEmpty || e.items.length >= 6) return e;
+  final out = <HoerenRfItem>[];
+  while (out.length < 6) {
+    out.addAll(e.items);
+  }
+  final six = out.sublist(0, 6)..shuffle(r);
+  return HoerenRichtigFalschExercise(
+    teil: e.teil,
+    title: e.title,
+    hortext: e.hortext,
+    wordHints: e.wordHints,
+    items: six,
+  );
+}
+
+HoerenOpenExercise expandOpenToSixQa(HoerenOpenExercise e) {
+  if (e.qa.isEmpty || e.qa.length >= 6) return e;
+  final out = <HoerenOpenQa>[];
+  var i = 0;
+  while (out.length < 6) {
+    out.add(e.qa[i % e.qa.length]);
+    i++;
+  }
+  return HoerenOpenExercise(
+    teil: e.teil,
+    title: e.title,
+    hortext: e.hortext,
+    wordHints: e.wordHints,
+    qa: out,
+  );
+}
+
+HoerenExercise expandHoerenToSixSteps(HoerenExercise e, Random r) {
+  return switch (e) {
+    HoerenPictureExercise() => expandPictureToSixRounds(e, r),
+    HoerenRichtigFalschExercise() => expandRfToSixItems(e, r),
+    HoerenOpenExercise() => expandOpenToSixQa(e),
+  };
+}
+
+/// Копия списка в случайном порядке; у каждого задания шесть подвопросов.
 List<HoerenExercise> shuffledHoerenExercises(Random random) {
-  final list = List<HoerenExercise>.from(allHoerenExercises());
+  final list = allHoerenExercises()
+      .map(
+        (e) => expandHoerenToSixSteps(
+              e,
+              Random(random.nextInt(0x7fffffff)),
+            ),
+      )
+      .toList();
   list.shuffle(random);
   return list;
 }

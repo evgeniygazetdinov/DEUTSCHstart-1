@@ -1,9 +1,11 @@
 /// Нормализация и сравнение распознанной речи с эталоном (немецкий текст).
 
+import 'utf16_sanitize.dart';
+
 /// Убирает пунктуацию, лишние пробелы, приводит к нижнему регистру,
 /// упрощает умлауты (распознаватель часто даёт «ae» вместо «ä»).
 String normalizeForSpeechCompare(String input) {
-  var s = input.toLowerCase().trim();
+  var s = sanitizeWellFormedUtf16(input).toLowerCase().trim();
   s = s.replaceAll('ä', 'a');
   s = s.replaceAll('ö', 'o');
   s = s.replaceAll('ü', 'u');
