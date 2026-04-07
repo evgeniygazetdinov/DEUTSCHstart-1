@@ -3,6 +3,7 @@ import 'deutsch/hoeren_screen.dart';
 import 'deutsch/lesen_screen.dart';
 import 'deutsch/schreiben_screen.dart';
 import 'deutsch/sprechen_screen.dart';
+import 'deutsch/artikel_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -33,6 +34,13 @@ class HomeScreen extends StatelessWidget {
       icon: Icons.record_voice_over_outlined,
       subtitle:
           'Знакомство (буквы, числа), тематические карточки, вежливые просьбы.',
+    ),
+    _ModuleEntry(
+      titleDe: 'Artikel',
+      titleRu: 'Артикли',
+      icon: Icons.article_outlined,
+      subtitle:
+          'der / die / das: 150 существительных, озвучка слова и полной формы.',
     ),
   ];
 
@@ -73,6 +81,7 @@ class HomeScreen extends StatelessWidget {
                   1 => const LesenScreen(),
                   2 => const SchreibenScreen(),
                   3 => const SprechenScreen(),
+                  4 => const ArtikelScreen(),
                   _ => const HoerenScreen(),
                 };
                 Navigator.push(
