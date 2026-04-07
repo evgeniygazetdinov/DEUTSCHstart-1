@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../data/hoeren_glossary.dart';
 import '../services/german_word_tts.dart';
 import '../services/hoeren_online_translate.dart';
+import '../utils/utf16_sanitize.dart';
 
 /// Hörtext: отдельные слова с подчёркиванием; по нажатию — перевод снизу.
 class TappableHortext extends StatefulWidget {
@@ -54,6 +55,41 @@ List<_Tok> _tokenizeHortext(String text) {
       .toList();
 }
 
+/// Регекс для «прочего» режет по одному UTF-16 коду — эмодзи (суррогатная пара)
+/// превращается в два токена с половинками; SkParagraph их не принимает.
+List<_Tok> _mergeSurrogatePairTokens(List<_Tok> tokens) {
+  var list = List<_Tok>.from(tokens);
+  var changed = true;
+  while (changed) {
+    changed = false;
+    final next = <_Tok>[];
+    for (var i = 0; i < list.length; i++) {
+      if (i + 1 < list.length) {
+        final a = list[i].raw;
+        final b = list[i + 1].raw;
+        if (a.length == 1 && b.length == 1) {
+          final u = a.codeUnitAt(0);
+          final u2 = b.codeUnitAt(0);
+          if (u >= 0xD800 &&
+              u <= 0xDBFF &&
+              u2 >= 0xDC00 &&
+              u2 <= 0xDFFF) {
+            final merged = String.fromCharCodes([u, u2]);
+            final bothWord = list[i] is _TokWord && list[i + 1] is _TokWord;
+            next.add(bothWord ? _TokWord(merged) : _TokOther(merged));
+            i++;
+            changed = true;
+            continue;
+          }
+        }
+      }
+      next.add(list[i]);
+    }
+    list = next;
+  }
+  return list;
+}
+
 class _TappableHortextState extends State<TappableHortext> {
   late List<_Tok> _tokens;
   List<TapGestureRecognizer?> _recognizers = [];
@@ -75,7 +111,9 @@ class _TappableHortextState extends State<TappableHortext> {
   }
 
   void _bindTokens() {
-    _tokens = _tokenizeHortext(widget.text);
+    _tokens = _mergeSurrogatePairTokens(
+      _tokenizeHortext(sanitizeWellFormedUtf16(widget.text)),
+    );
     _recognizers = List<TapGestureRecognizer?>.generate(_tokens.length, (i) {
       if (_tokens[i] is! _TokWord) return null;
       final surface = _tokens[i].raw;
@@ -139,9 +177,11 @@ class _TappableHortextState extends State<TappableHortext> {
     for (var i = 0; i < _tokens.length; i++) {
       final t = _tokens[i];
       if (t is _TokWord) {
+        final safe = sanitizeWellFormedUtf16(t.raw);
+        final display = safe.isEmpty ? '\uFFFD' : safe;
         children.add(
           TextSpan(
-            text: t.raw,
+            text: display,
             style: base.merge(
               TextStyle(
                 decoration: TextDecoration.underline,
@@ -153,7 +193,9 @@ class _TappableHortextState extends State<TappableHortext> {
           ),
         );
       } else {
-        children.add(TextSpan(text: t.raw, style: base));
+        final safe = sanitizeWellFormedUtf16(t.raw);
+        final display = safe.isEmpty ? '\uFFFD' : safe;
+        children.add(TextSpan(text: display, style: base));
       }
     }
 
@@ -218,7 +260,10 @@ class _HoerenWordSheetState extends State<_HoerenWordSheet> {
 
     Widget translationBlock() {
       if (widget.localRu != null) {
-        return Text(widget.localRu!, style: theme.textTheme.bodyLarge);
+        return Text(
+          sanitizeWellFormedUtf16(widget.localRu!),
+          style: theme.textTheme.bodyLarge,
+        );
       }
       if (_loadingRemote) {
         return Row(
@@ -243,7 +288,10 @@ class _HoerenWordSheetState extends State<_HoerenWordSheet> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_remoteRu!, style: theme.textTheme.bodyLarge),
+            Text(
+              sanitizeWellFormedUtf16(_remoteRu!),
+              style: theme.textTheme.bodyLarge,
+            ),
             const SizedBox(height: 6),
             Text(
               'Перевод из интернета (MyMemory), может быть неточным.',
@@ -286,7 +334,7 @@ class _HoerenWordSheetState extends State<_HoerenWordSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    widget.surface,
+                    sanitizeWellFormedUtf16(widget.surface),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

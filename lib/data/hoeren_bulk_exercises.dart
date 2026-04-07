@@ -61,10 +61,14 @@ List<HoerenExercise> _bulkTeil1() {
           teil: 'Teil 1',
           title: r.title,
           hortext: r.h,
-          question: r.q,
-          options: ['A) ${r.o0}', 'B) ${r.o1}', 'C) ${r.o2}'],
-          correctIndex: r.ok,
-          explanation: r.exp,
+          rounds: [
+            HoerenPictureRound(
+              question: r.q,
+              options: ['A) ${r.o0}', 'B) ${r.o1}', 'C) ${r.o2}'],
+              correctIndex: r.ok,
+              explanation: r.exp,
+            ),
+          ],
         ),
       )
       .toList();
@@ -284,10 +288,14 @@ List<HoerenExercise> _bulkTeil3() {
           teil: 'Teil 3',
           title: r.title,
           hortext: r.h,
-          question: r.q,
-          options: ['A) ${r.o0}', 'B) ${r.o1}', 'C) ${r.o2}'],
-          correctIndex: r.ok,
-          explanation: r.exp,
+          rounds: [
+            HoerenPictureRound(
+              question: r.q,
+              options: ['A) ${r.o0}', 'B) ${r.o1}', 'C) ${r.o2}'],
+              correctIndex: r.ok,
+              explanation: r.exp,
+            ),
+          ],
         ),
       )
       .toList();

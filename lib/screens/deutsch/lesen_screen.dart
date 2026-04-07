@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../utils/lesen_speech_compare.dart';
+import '../../utils/utf16_sanitize.dart';
 
 /// Модуль «Чтение»: объявления, письма, таблички → richtig/falsch или сопоставление.
 class LesenScreen extends StatefulWidget {
@@ -47,37 +48,45 @@ Ihr Team vom Buchladen „Leselust“
   }
 
   Future<void> _initSpeech() async {
-    final ok = await _speech.initialize(
-      onError: (e) {
-        if (mounted) {
-          setState(() {});
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Spracherkennung: ${e.errorMsg}'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      },
-      onStatus: (status) {
-        if (!mounted) return;
-        if (status == 'done' || status == 'notListening') {
-          setState(() => _listening = false);
-        }
-      },
-    );
-    if (!mounted) return;
+    var ok = false;
     String? locale;
-    if (ok) {
-      final locales = await _speech.locales();
-      for (final l in locales) {
-        final id = l.localeId.toLowerCase();
-        if (id.startsWith('de')) {
-          locale = l.localeId;
-          if (id == 'de_de') break;
+    try {
+      ok = await _speech.initialize(
+        onError: (e) {
+          if (mounted) {
+            setState(() {});
+            final msg = sanitizeWellFormedUtf16(e.errorMsg);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Spracherkennung: $msg'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        onStatus: (status) {
+          if (!mounted) return;
+          if (status == 'done' || status == 'notListening') {
+            setState(() => _listening = false);
+          }
+        },
+      );
+      if (ok) {
+        final locales = await _speech.locales();
+        for (final l in locales) {
+          final id = l.localeId.toLowerCase();
+          if (id.startsWith('de')) {
+            locale = l.localeId;
+            if (id == 'de_de') break;
+          }
         }
       }
+    } catch (e, st) {
+      ok = false;
+      locale = null;
+      debugPrint('speech_to_text initialize: $e\n$st');
     }
+    if (!mounted) return;
     setState(() {
       _speechInitDone = true;
       _speechUsable = ok && locale != null;
@@ -87,7 +96,9 @@ Ihr Team vom Buchladen „Leselust“
 
   @override
   void dispose() {
-    _speech.cancel();
+    try {
+      _speech.cancel();
+    } catch (_) {}
     super.dispose();
   }
 
@@ -98,7 +109,9 @@ Ihr Team vom Buchladen „Leselust“
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          isCorrect ? 'Richtig — gut gelesen!' : 'Noch einmal: der Text sagt „geschlossen“ am Samstag.',
+          isCorrect
+              ? 'Richtig — gut gelesen!'
+              : 'Noch einmal: der Text sagt "geschlossen" am Samstag.',
         ),
         behavior: SnackBarBehavior.floating,
       ),
@@ -108,7 +121,9 @@ Ihr Team vom Buchladen „Leselust“
   Future<void> _toggleListen() async {
     if (!_speechUsable || _deLocaleId == null) return;
     if (_listening) {
-      await _speech.stop();
+      try {
+        await _speech.stop();
+      } catch (_) {}
       setState(() => _listening = false);
       return;
     }
@@ -117,12 +132,14 @@ Ihr Team vom Buchladen „Leselust“
       _lastSimilarity = null;
       _listening = true;
     });
-    await _speech.listen(
+    try {
+      await _speech.listen(
       onResult: (r) {
         if (!mounted) return;
-        setState(() => _heard = r.recognizedWords);
+        final words = sanitizeWellFormedUtf16(r.recognizedWords);
+        setState(() => _heard = words);
         if (r.finalResult) {
-          final sim = speechTextSimilarity(_speechTarget, r.recognizedWords);
+          final sim = speechTextSimilarity(_speechTarget, words);
           setState(() {
             _lastSimilarity = sim;
             _listening = false;
@@ -146,6 +163,18 @@ Ihr Team vom Buchladen „Leselust“
         partialResults: true,
       ),
     );
+    } catch (e, st) {
+      debugPrint('speech_to_text listen: $e\n$st');
+      if (mounted) {
+        setState(() => _listening = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Mikrofon / Spracherkennung auf dieser Plattform nicht verfügbar.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override

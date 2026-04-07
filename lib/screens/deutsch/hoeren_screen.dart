@@ -21,8 +21,16 @@ class _HoerenScreenState extends State<HoerenScreen> {
   final Random _random = Random();
   int _index = 0;
 
+  /// Текущий подвопрос у [HoerenPictureExercise] (0 … rounds.length − 1).
+  int _pictureRound = 0;
   int? _pictureSelected;
   List<int?> _rfPicked = [];
+
+  /// Сид для кота; `null`, если серия завершена с ошибками в оцениваемых заданиях.
+  int? _doneCatSeed;
+
+  /// Была ли хоть одна ошибка в заданиях с проверкой (6× A–C или 6× richtig/falsch).
+  bool _sessionHasMistake = false;
 
   final FlutterTts _tts = FlutterTts();
   final LinuxShellTts _linuxTts = LinuxShellTts();
@@ -50,6 +58,40 @@ class _HoerenScreenState extends State<HoerenScreen> {
     };
   }
 
+  double get _linearProgress {
+    if (_atEnd) return 1;
+    final n = _exercises.length;
+    if (n == 0) return 0.0;
+    final e = _current;
+    if (e is HoerenPictureExercise) {
+      final r = e.rounds.length;
+      final w = (_pictureRound + (_pictureSelected != null ? 1 : 0)) / r;
+      return ((_index + w) / n).clamp(0.0, 1.0);
+    }
+    if (e is HoerenRichtigFalschExercise) {
+      final answered = _rfPicked.where((p) => p != null).length;
+      final w = answered / e.items.length;
+      return ((_index + w) / n).clamp(0.0, 1.0);
+    }
+    return ((_index + 0.5) / n).clamp(0.0, 1.0);
+  }
+
+  String _primaryButtonLabel() {
+    if (_atEnd) return 'Fertig';
+    final cur = _current;
+    final total = _exercises.length;
+    if (cur is HoerenPictureExercise) {
+      final nr = cur.rounds.length;
+      if (_pictureSelected == null) {
+        return 'Weiter (Aufgabe ${_index + 1}/$total)';
+      }
+      if (_pictureRound < nr - 1) {
+        return 'Nächste Frage (${_pictureRound + 2}/$nr)';
+      }
+    }
+    return 'Weiter (${_index + 1}/$total)';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +103,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
 
   void _syncLocalStateForCurrent() {
     if (_atEnd) return;
+    _pictureRound = 0;
     _pictureSelected = null;
     final e = _current;
     if (e is HoerenRichtigFalschExercise) {
@@ -82,6 +125,8 @@ class _HoerenScreenState extends State<HoerenScreen> {
   void _reshuffle() {
     _stopAudio();
     setState(() {
+      _doneCatSeed = null;
+      _sessionHasMistake = false;
       _exercises = shuffledHoerenExercises(_random);
       _index = 0;
       _syncLocalStateForCurrent();
@@ -159,9 +204,39 @@ class _HoerenScreenState extends State<HoerenScreen> {
 
   void _nextExercise() {
     if (!_canGoNext) return;
+    final cur = _current;
+
+    var mistakeThisStep = false;
+    if (cur is HoerenPictureExercise) {
+      final round = cur.rounds[_pictureRound];
+      mistakeThisStep = _pictureSelected != round.correctIndex;
+      if (_pictureRound < cur.rounds.length - 1) {
+        _stopAudio();
+        setState(() {
+          if (mistakeThisStep) _sessionHasMistake = true;
+          _pictureRound++;
+          _pictureSelected = null;
+        });
+        return;
+      }
+    } else if (cur is HoerenRichtigFalschExercise) {
+      for (var j = 0; j < cur.items.length; j++) {
+        final userRichtig = _rfPicked[j] == 1;
+        if (userRichtig != cur.items[j].correctIsRichtig) {
+          mistakeThisStep = true;
+          break;
+        }
+      }
+    }
+
     _stopAudio();
     setState(() {
+      if (mistakeThisStep) _sessionHasMistake = true;
       _index++;
+      if (_index >= _exercises.length) {
+        _doneCatSeed =
+            _sessionHasMistake ? null : _random.nextInt(1 << 30);
+      }
       _syncLocalStateForCurrent();
     });
   }
@@ -204,11 +279,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _canGoNext ? _nextExercise : null,
-                      child: Text(
-                        _index + 1 >= _exercises.length
-                            ? 'Fertig'
-                            : 'Weiter (${_index + 1}/${_exercises.length})',
-                      ),
+                      child: Text(_primaryButtonLabel()),
                     ),
                   ),
                 ),
@@ -227,18 +298,19 @@ class _HoerenScreenState extends State<HoerenScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Задания из Teil 1–3 и бонус — в случайном порядке. Слушайте текст (play), затем отвечайте. '
-              'Пунктир — нажмите слово для перевода (вопрос, варианты, утверждения). '
-              'В вариантах A–B–C выбор: нажмите круг с буквой слева; справа — текст с переводами по словам.',
+              'Задания из Teil 1–3 и бонус — в случайном порядке. У каждого задания шесть подвопросов '
+              '(картинки: шесть раундов A–B–C; richtig/falsch — шесть утверждений; бонус — шесть блоков). '
+              'Слушайте текст (play), затем отвечайте. Пунктир — перевод слова. '
+              'В A–B–C нажмите круг с буквой слева. '
+              'Случайный котик в конце — только если за всю серию нет ни одной ошибки '
+              'ни в шести вопросах A–C, ни в шести richtig/falsch (бонус без оценки на кота не влияет).',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: 16),
             if (!_atEnd) ...[
-              LinearProgressIndicator(
-                value: (_index + 1) / _exercises.length,
-              ),
+              LinearProgressIndicator(value: _linearProgress),
               const SizedBox(height: 12),
               _buildExerciseCard(context),
             ] else
@@ -250,6 +322,10 @@ class _HoerenScreenState extends State<HoerenScreen> {
   }
 
   Widget _buildDoneCard(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final earnedCat = _doneCatSeed != null;
+    final seed = _doneCatSeed ?? _random.nextInt(1 << 30);
+    final catUrl = 'https://cataas.com/cat?unique=$seed';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -264,6 +340,86 @@ class _HoerenScreenState extends State<HoerenScreen> {
             const Text(
               'Нажмите «shuffle» на панели сверху, чтобы пройти те же задания в новом порядке.',
             ),
+            if (earnedCat) ...[
+              const SizedBox(height: 16),
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: SizedBox(
+                    height: 220,
+                    width: double.infinity,
+                    child: Image.network(
+                      catUrl,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      },
+                      errorBuilder: (_, __, ___) => Container(
+                        color: scheme.surfaceContainerHighest,
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.pets_rounded,
+                          size: 80,
+                          color: scheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Случайный котик — за серию из ${_exercises.length} заданий без единой ошибки '
+                'в блоках A–C и richtig/falsch.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+              ),
+            ] else ...[
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.pets_rounded,
+                      size: 56,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.45),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Котик только при идеальном результате',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Была хотя бы одна ошибка в шести вопросах с картинками (A–B–C) '
+                      'или в шести утверждениях richtig/falsch. Пройдите серию снова '
+                      '(shuffle) и ответьте на всё верно — тогда появится случайный кот.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -348,45 +504,59 @@ class _HoerenScreenState extends State<HoerenScreen> {
   }
 
   Widget _buildPicturePart(BuildContext context, HoerenPictureExercise e) {
+    final round = e.rounds[_pictureRound];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Chip(
+              label: Text('Frage ${_pictureRound + 1}/${e.rounds.length}'),
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         TappableHortext(
-          text: e.question,
+          text: round.question,
           wordHints: e.wordHints,
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 12),
-        for (var i = 0; i < e.options.length; i++)
+        for (var i = 0; i < round.options.length; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: _abcOptionTile(
               context: context,
               index: i,
-              optionText: e.options[i].replaceFirst(_leadingAbcParen, '').trim(),
+              optionText:
+                  round.options[i].replaceFirst(_leadingAbcParen, '').trim(),
               wordHints: e.wordHints,
               selected: _pictureSelected == i,
               showResult: _pictureSelected != null,
-              correct: i == e.correctIndex,
+              correct: i == round.correctIndex,
               onSelectLetter: _pictureSelected == null ? () => _pickPicture(i) : null,
             ),
           ),
         if (_pictureSelected != null) ...[
           const SizedBox(height: 8),
           Text(
-            _pictureSelected == e.correctIndex
+            _pictureSelected == round.correctIndex
                 ? 'Richtig ✓'
                 : 'Nicht richtig.',
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: _pictureSelected == e.correctIndex
+              color: _pictureSelected == round.correctIndex
                   ? Colors.green.shade700
                   : Theme.of(context).colorScheme.error,
             ),
           ),
           const SizedBox(height: 4),
           TappableHortext(
-            text: e.explanation,
+            text: round.explanation,
             wordHints: e.wordHints,
             style: Theme.of(context).textTheme.bodySmall,
           ),
