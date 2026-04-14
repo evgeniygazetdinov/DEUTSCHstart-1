@@ -36,4 +36,5 @@ chmod +x setup.sh
 - **Lesen** — чтение (richtig/falsch, сопоставление)
 - **Schreiben** — анкета и короткое письмо (~30 слов)
 - **Sprechen** — говорение (знакомство, темы, вежливые формулы)
+- **Bestimmer Artikell** - конкретные упраженения на der\das\die
 

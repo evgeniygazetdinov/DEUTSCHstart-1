@@ -151,8 +151,8 @@ class _ArtikelScreenState extends State<ArtikelScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Выберите артикль для слова (или словосочетания). '
-          'Кнопка динамика произносит только слово, без артикля.',
+          'Выберите артикль для слова. Под ним — перевод на русский. '
+          'Динамик произносит только немецкое слово, без артикля.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
                 height: 1.35,
@@ -178,12 +178,26 @@ class _ArtikelScreenState extends State<ArtikelScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Text(
-                        q.prompt,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              height: 1.25,
-                            ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            q.prompt,
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.25,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            q.translationRu,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                  fontStyle: FontStyle.italic,
+                                  height: 1.35,
+                                ),
+                          ),
+                        ],
                       ),
                     ),
                     IconButton.filledTonal(
