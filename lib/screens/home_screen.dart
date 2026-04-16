@@ -3,6 +3,7 @@ import 'deutsch/hoeren_screen.dart';
 import 'deutsch/lesen_screen.dart';
 import 'deutsch/schreiben_screen.dart';
 import 'deutsch/sprechen_screen.dart';
+import 'deutsch/akkusativ_artikel_screen.dart';
 import 'deutsch/artikel_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -41,6 +42,13 @@ class HomeScreen extends StatelessWidget {
       icon: Icons.article_outlined,
       subtitle:
           'der / die / das: 150 существительных, озвучка слова и полной формы.',
+    ),
+    _ModuleEntry(
+      titleDe: 'Artikel im Akkusativ',
+      titleRu: 'Артикль, винительный падеж',
+      icon: Icons.view_week_outlined,
+      subtitle:
+          'A1: теория + 100 заданий + бонус «Диалоги» (всего 112 карточек).',
     ),
   ];
 
@@ -82,6 +90,7 @@ class HomeScreen extends StatelessWidget {
                   2 => const SchreibenScreen(),
                   3 => const SprechenScreen(),
                   4 => const ArtikelScreen(),
+                  5 => const AkkusativArtikelScreen(),
                   _ => const HoerenScreen(),
                 };
                 Navigator.push(

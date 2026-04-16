@@ -37,4 +37,5 @@ chmod +x setup.sh
 - **Schreiben** — анкета и короткое письмо (~30 слов)
 - **Sprechen** — говорение (знакомство, темы, вежливые формулы)
 - **Bestimmer Artikell** - конкретные упраженения на der\das\die
+- **Artikell Akkusativ** - дательный падеж
 
