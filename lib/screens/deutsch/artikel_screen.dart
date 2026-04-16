@@ -3,9 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../data/der_die_das_data.dart';
+import '../../data/der_die_das_theory.dart';
 import '../../services/german_word_tts.dart';
 
-/// Упражнение: выбрать артикль der / die / das для существительного.
+/// Теория + упражнение: артикль der / die / das для существительного.
 class ArtikelScreen extends StatefulWidget {
   const ArtikelScreen({super.key});
 
@@ -13,9 +14,11 @@ class ArtikelScreen extends StatefulWidget {
   State<ArtikelScreen> createState() => _ArtikelScreenState();
 }
 
-class _ArtikelScreenState extends State<ArtikelScreen> {
+class _ArtikelScreenState extends State<ArtikelScreen>
+    with SingleTickerProviderStateMixin {
   static const _optLabels = ['der', 'die', 'das'];
 
+  late TabController _tabs;
   late List<DerDieDasQuestion> _items;
   final Random _random = Random();
   int _index = 0;
@@ -29,7 +32,21 @@ class _ArtikelScreenState extends State<ArtikelScreen> {
   @override
   void initState() {
     super.initState();
+    _tabs = TabController(length: 2, vsync: this);
+    _tabs.addListener(_onTabChanged);
     _items = List<DerDieDasQuestion>.from(allDerDieDasQuestions())..shuffle(_random);
+  }
+
+  void _onTabChanged() {
+    if (_tabs.indexIsChanging) return;
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _tabs.removeListener(_onTabChanged);
+    _tabs.dispose();
+    super.dispose();
   }
 
   void _reshuffle() {
@@ -76,26 +93,40 @@ class _ArtikelScreenState extends State<ArtikelScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final onUebungen = _tabs.index == 1;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Artikel — der / die / das'),
+        bottom: TabBar(
+          controller: _tabs,
+          tabs: [
+            const Tab(text: 'Теория'),
+            Tab(text: 'Übungen (${_items.length})'),
+          ],
+        ),
         actions: [
-          IconButton(
-            tooltip: 'Neue Reihenfolge',
-            onPressed: _reshuffle,
-            icon: const Icon(Icons.shuffle_rounded),
+          if (onUebungen)
+            IconButton(
+              tooltip: 'Neue Reihenfolge',
+              onPressed: _reshuffle,
+              icon: const Icon(Icons.shuffle_rounded),
+            ),
+        ],
+      ),
+      body: TabBarView(
+        controller: _tabs,
+        children: [
+          _buildTheoryTab(context),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: _atEnd ? _buildDone(context) : _buildQuestion(context, scheme),
+            ),
           ),
         ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: _atEnd ? _buildDone(context) : _buildQuestion(context, scheme),
-        ),
-      ),
-      bottomNavigationBar: _atEnd || !_showResult
-          ? null
-          : Material(
+      bottomNavigationBar: onUebungen && !_atEnd && _showResult
+          ? Material(
               elevation: 6,
               color: scheme.surface,
               child: SafeArea(
@@ -115,7 +146,59 @@ class _ArtikelScreenState extends State<ArtikelScreen> {
                   ),
                 ),
               ),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildTheoryTab(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      children: [
+        Text(
+          'der · die · das',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Nominativ (A1): определённый артикль. Вторая вкладка — 150 карточек с переводом и озвучкой.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 16),
+        for (final sec in kDerDieDasTheorySections) ...[
+          Card(
+            margin: const EdgeInsets.only(bottom: 10),
+            child: ExpansionTile(
+              initiallyExpanded: sec.title.startsWith('1.'),
+              title: Text(
+                sec.title,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: SelectableText(
+                      sec.body,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            height: 1.45,
+                            fontFamily: 'monospace',
+                            fontFamilyFallback: const ['monospace'],
+                          ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+          ),
+        ],
+      ],
     );
   }
 
