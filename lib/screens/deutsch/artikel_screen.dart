@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../data/der_die_das_data.dart';
 import '../../data/der_die_das_theory.dart';
 import '../../services/german_word_tts.dart';
+import '../../utils/artikel_stats_feedback.dart';
 
 /// Теория + упражнение: артикль der / die / das для существительного.
 class ArtikelScreen extends StatefulWidget {
@@ -20,14 +21,16 @@ class _ArtikelScreenState extends State<ArtikelScreen>
 
   late TabController _tabs;
   late List<DerDieDasQuestion> _items;
+  late int _zielAnzahl;
   final Random _random = Random();
-  int _index = 0;
   int? _picked;
   bool _showResult = false;
+  int _richtig = 0;
+  int _falsch = 0;
 
-  bool get _atEnd => _index >= _items.length;
+  bool get _atEnd => _items.isEmpty;
 
-  DerDieDasQuestion? get _current => _atEnd ? null : _items[_index];
+  DerDieDasQuestion? get _current => _atEnd ? null : _items.first;
 
   @override
   void initState() {
@@ -35,6 +38,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
     _tabs = TabController(length: 2, vsync: this);
     _tabs.addListener(_onTabChanged);
     _items = List<DerDieDasQuestion>.from(allDerDieDasQuestions())..shuffle(_random);
+    _zielAnzahl = _items.length;
   }
 
   void _onTabChanged() {
@@ -53,9 +57,11 @@ class _ArtikelScreenState extends State<ArtikelScreen>
     GermanWordTts.instance.stop();
     setState(() {
       _items = List<DerDieDasQuestion>.from(allDerDieDasQuestions())..shuffle(_random);
-      _index = 0;
+      _zielAnzahl = _items.length;
       _picked = null;
       _showResult = false;
+      _richtig = 0;
+      _falsch = 0;
     });
   }
 
@@ -74,20 +80,44 @@ class _ArtikelScreenState extends State<ArtikelScreen>
 
   void _pick(int i) {
     if (_showResult || _current == null) return;
+    final ok = i == _current!.correctIndex;
     setState(() {
       _picked = i;
       _showResult = true;
+      if (ok) {
+        _richtig++;
+      } else {
+        _falsch++;
+      }
     });
   }
 
   void _next() {
-    if (!_showResult) return;
+    if (!_showResult || _current == null) return;
     GermanWordTts.instance.stop();
+    final q = _items.first;
+    final wasCorrect = _picked == q.correctIndex;
     setState(() {
-      _index++;
+      _items.removeAt(0);
+      if (!wasCorrect) {
+        if (_items.isEmpty) {
+          _items.add(q);
+        } else {
+          final pos = 1 + _random.nextInt(_items.length);
+          _items.insert(pos, q);
+        }
+      }
       _picked = null;
       _showResult = false;
     });
+  }
+
+  String _weiterButtonLabel() {
+    final q = _items.first;
+    if (_items.length == 1 && _showResult && _picked == q.correctIndex) {
+      return 'Fertig';
+    }
+    return 'Weiter (noch ${_items.length})';
   }
 
   @override
@@ -101,7 +131,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
           controller: _tabs,
           tabs: [
             const Tab(text: 'Теория'),
-            Tab(text: 'Übungen (${_items.length})'),
+            Tab(text: 'Übungen ($_zielAnzahl)'),
           ],
         ),
         actions: [
@@ -137,11 +167,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _next,
-                      child: Text(
-                        _index + 1 >= _items.length
-                            ? 'Fertig'
-                            : 'Weiter (${_index + 1}/${_items.length})',
-                      ),
+                      child: Text(_weiterButtonLabel()),
                     ),
                   ),
                 ),
@@ -203,23 +229,53 @@ class _ArtikelScreenState extends State<ArtikelScreen>
   }
 
   Widget _buildDone(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final p = artikelAntwortProzent(_richtig, _falsch) ?? 0;
+    final fb = artikelFeedbackNachProzent(p, ArtikelStatsModul.nominativDerDieDas);
     return Center(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Alle ${_items.length} Fragen durch',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Нажмите shuffle на панели, чтобы пройти карточки в новом порядке.',
-                textAlign: TextAlign.center,
-              ),
-            ],
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Alle $_zielAnzahl Fragen durch',
+                  style: Theme.of(context).textTheme.titleLarge,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  artikelStatistikZeileRu(_richtig, _falsch),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  fb.sterne,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 22),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  fb.meldung,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.4),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Нажмите shuffle на панели, чтобы начать новый проход и обнулить статистику.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -235,14 +291,25 @@ class _ArtikelScreenState extends State<ArtikelScreen>
       children: [
         Text(
           'Выберите артикль для слова. Под ним — перевод на русский. '
-          'Динамик произносит только немецкое слово, без артикля.',
+          'Динамик произносит только немецкое слово, без артикля. '
+          'При ошибке карточка вернётся позже в очередь.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
                 height: 1.35,
               ),
         ),
         const SizedBox(height: 16),
-        LinearProgressIndicator(value: (_index + 1) / _items.length),
+        LinearProgressIndicator(
+          value: (_richtig / _zielAnzahl).clamp(0.0, 1.0),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          artikelStatistikZeileRu(_richtig, _falsch),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+        ),
         const SizedBox(height: 20),
         Card(
           child: Padding(
