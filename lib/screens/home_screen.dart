@@ -5,6 +5,7 @@ import 'deutsch/schreiben_screen.dart';
 import 'deutsch/sprechen_screen.dart';
 import 'deutsch/akkusativ_artikel_screen.dart';
 import 'deutsch/artikel_screen.dart';
+import 'deutsch/dativ_artikel_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -50,6 +51,13 @@ class HomeScreen extends StatelessWidget {
       subtitle:
           'A1: теория + 100 заданий + бонус «Диалоги» (всего 112 карточек).',
     ),
+    _ModuleEntry(
+      titleDe: 'Artikel im Dativ',
+      titleRu: 'Артикль, дательный падеж',
+      icon: Icons.alt_route_outlined,
+      subtitle:
+          'A1: теория + 150 заданий (Wem?, Präpositionen, Verben, Wo?, Plural).',
+    ),
   ];
 
   @override
@@ -91,6 +99,7 @@ class HomeScreen extends StatelessWidget {
                   3 => const SprechenScreen(),
                   4 => const ArtikelScreen(),
                   5 => const AkkusativArtikelScreen(),
+                  6 => const DativArtikelScreen(),
                   _ => const HoerenScreen(),
                 };
                 Navigator.push(

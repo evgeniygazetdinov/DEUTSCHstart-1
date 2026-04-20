@@ -2,22 +2,22 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import '../../data/akkusativ_artikel_questions.dart';
-import '../../data/akkusativ_artikel_theory.dart';
+import '../../data/dativ_artikel_questions.dart';
+import '../../data/dativ_artikel_theory.dart';
 import '../../utils/artikel_stats_feedback.dart';
 
-/// Теория + упражнения Artikel im Akkusativ (A1 / Start Deutsch 1).
-class AkkusativArtikelScreen extends StatefulWidget {
-  const AkkusativArtikelScreen({super.key});
+/// Теория + упражнения Artikel im Dativ (A1 / Start Deutsch 1).
+class DativArtikelScreen extends StatefulWidget {
+  const DativArtikelScreen({super.key});
 
   @override
-  State<AkkusativArtikelScreen> createState() => _AkkusativArtikelScreenState();
+  State<DativArtikelScreen> createState() => _DativArtikelScreenState();
 }
 
-class _AkkusativArtikelScreenState extends State<AkkusativArtikelScreen>
+class _DativArtikelScreenState extends State<DativArtikelScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabs;
-  late List<AkkusativArtikelFrage> _queue;
+  late List<DativArtikelFrage> _queue;
   late int _zielAnzahl;
   final Random _random = Random();
   int? _picked;
@@ -29,7 +29,7 @@ class _AkkusativArtikelScreenState extends State<AkkusativArtikelScreen>
   void initState() {
     super.initState();
     _tabs = TabController(length: 2, vsync: this);
-    _queue = List<AkkusativArtikelFrage>.from(allAkkusativArtikelFragen());
+    _queue = List<DativArtikelFrage>.from(allDativArtikelFragen());
     _zielAnzahl = _queue.length;
     _queue.shuffle(_random);
   }
@@ -41,9 +41,9 @@ class _AkkusativArtikelScreenState extends State<AkkusativArtikelScreen>
   }
 
   bool get _atEnd => _queue.isEmpty;
-  AkkusativArtikelFrage? get _current => _atEnd ? null : _queue.first;
+  DativArtikelFrage? get _current => _atEnd ? null : _queue.first;
 
-  String _previewLine(AkkusativArtikelFrage q) {
+  String _previewLine(DativArtikelFrage q) {
     final mid = _picked == null ? '___' : q.options[_picked!];
     final gap = _picked == null ? '___ ' : '$mid ';
     return '${q.beforeGap}$gap${q.afterGap}';
@@ -84,7 +84,7 @@ class _AkkusativArtikelScreenState extends State<AkkusativArtikelScreen>
 
   void _restartFragen() {
     setState(() {
-      _queue = List<AkkusativArtikelFrage>.from(allAkkusativArtikelFragen());
+      _queue = List<DativArtikelFrage>.from(allDativArtikelFragen());
       _zielAnzahl = _queue.length;
       _queue.shuffle(_random);
       _picked = null;
@@ -106,7 +106,7 @@ class _AkkusativArtikelScreenState extends State<AkkusativArtikelScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Artikel im Akkusativ — A1'),
+        title: const Text('Artikel im Dativ — A1'),
         bottom: TabBar(
           controller: _tabs,
           tabs: [
@@ -131,21 +131,20 @@ class _AkkusativArtikelScreenState extends State<AkkusativArtikelScreen>
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
         Text(
-          'Artikel im Akkusativ',
+          'Artikel im Dativ',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
         ),
         const SizedBox(height: 6),
         Text(
-          'Start Deutsch 1: bestimmte und unbestimmte Artikel, Präpositionen '
-          '(für, durch, ohne, gegen, um). Вторая вкладка — упражнения.',
+          'Start Deutsch 1: Wem?, Präpositionen, Verben, Wo? Вторая вкладка — 150 заданий.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
         ),
         const SizedBox(height: 16),
-        for (final sec in kAkkusativArtikelTheorySections) ...[
+        for (final sec in kDativArtikelTheorySections) ...[
           Card(
             margin: const EdgeInsets.only(bottom: 10),
             child: ExpansionTile(
@@ -181,7 +180,7 @@ class _AkkusativArtikelScreenState extends State<AkkusativArtikelScreen>
     final scheme = Theme.of(context).colorScheme;
     if (_atEnd) {
       final p = artikelAntwortProzent(_richtig, _falsch) ?? 0;
-      final fb = artikelFeedbackNachProzent(p, ArtikelStatsModul.akkusativ);
+      final fb = artikelFeedbackNachProzent(p, ArtikelStatsModul.dativ);
       return Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -261,7 +260,7 @@ class _AkkusativArtikelScreenState extends State<AkkusativArtikelScreen>
             children: [
               Text(
                 'При необходимости откройте вкладку «Теория». '
-                'При ошибке задание вернётся позже в очередь — можно ответить верно.',
+                'При ошибке задание вернётся позже в очередь.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -269,7 +268,7 @@ class _AkkusativArtikelScreenState extends State<AkkusativArtikelScreen>
               const SizedBox(height: 12),
               Chip(
                 label: Text(
-                  '${akkusativArtikelTeilLabelDe(q.teil)} · Nr. ${q.nr}/$_zielAnzahl · '
+                  '${dativArtikelTeilLabelDe(q.teil)} · Nr. ${q.nr}/$_zielAnzahl · '
                   'noch ${_queue.length}',
                 ),
                 visualDensity: VisualDensity.compact,
@@ -343,9 +342,7 @@ class _AkkusativArtikelScreenState extends State<AkkusativArtikelScreen>
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _nextQ,
-                    child: Text(
-                      _weiterButtonLabel(),
-                    ),
+                    child: Text(_weiterButtonLabel()),
                   ),
                 ),
               ),
