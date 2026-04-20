@@ -38,4 +38,5 @@ chmod +x setup.sh
 - **Sprechen** — говорение (знакомство, темы, вежливые формулы)
 - **Bestimmer Artikell** - конкретные упраженения на der\das\die
 - **Artikell Akkusativ** - дательный падеж
+- **Akkusativ im Dativ** -винительный и дательный
 

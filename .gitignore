@@ -35,6 +35,9 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Копии релизных APK/AAB из Gradle (см. android/app/build.gradle)
+/dist/
+
 # Symbolication related
 app.*.symbols
 
