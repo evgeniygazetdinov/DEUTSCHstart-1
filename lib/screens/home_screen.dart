@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'deutsch/hoeren_screen.dart';
 import 'deutsch/lesen_screen.dart';
-import 'deutsch/schreiben_screen.dart';
 import 'deutsch/sprechen_screen.dart';
 import 'deutsch/akkusativ_artikel_screen.dart';
 import 'deutsch/artikel_screen.dart';
 import 'deutsch/dativ_artikel_screen.dart';
+import 'deutsch/personalpronomen_akkusativ_screen.dart';
+import 'deutsch/personalpronomen_dativ_screen.dart';
+import 'deutsch/possessivartikel_akkusativ_screen.dart';
+import 'deutsch/possessivartikel_nominativ_screen.dart';
+import 'deutsch/possessivartikel_nom_akk_screen.dart';
+import 'deutsch/trennbare_verben_screen.dart';
+import 'deutsch/mixed_quiz_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -25,17 +31,18 @@ class HomeScreen extends StatelessWidget {
       subtitle: 'Объявления, письма, таблички: richtig/falsch или сопоставление.',
     ),
     _ModuleEntry(
-      titleDe: 'Schreiben',
-      titleRu: 'Письмо',
-      icon: Icons.edit_note,
-      subtitle: 'Формуляр и короткое E-Mail (~30 слов), типовые ситуации.',
-    ),
-    _ModuleEntry(
       titleDe: 'Sprechen',
       titleRu: 'Говорение',
       icon: Icons.record_voice_over_outlined,
       subtitle:
           'Знакомство (буквы, числа), тематические карточки, вежливые просьбы.',
+    ),
+    _ModuleEntry(
+      titleDe: 'Mix — Grammatik',
+      titleRu: 'Общий микс',
+      icon: Icons.shuffle,
+      subtitle:
+          '30 случайных вопросов из всех грамматических тем; статистика и приоритет ошибок.',
     ),
     _ModuleEntry(
       titleDe: 'Artikel',
@@ -57,6 +64,48 @@ class HomeScreen extends StatelessWidget {
       icon: Icons.alt_route_outlined,
       subtitle:
           'A1: теория + 150 заданий (Wem?, Präpositionen, Verben, Wo?, Plural).',
+    ),
+    _ModuleEntry(
+      titleDe: 'Personalpronomen — Akkusativ',
+      titleRu: 'Личные местоимения, винительный падеж',
+      icon: Icons.person_outline,
+      subtitle:
+          'A1: теория + 150 заданий (mich, dich, ihn; Verben; Präpositionen).',
+    ),
+    _ModuleEntry(
+      titleDe: 'Personalpronomen — Dativ',
+      titleRu: 'Личные местоимения, дательный падеж',
+      icon: Icons.people_outline,
+      subtitle:
+          'A1: теория + 150 заданий (mir, dir, ihm; Verben; Präpositionen).',
+    ),
+    _ModuleEntry(
+      titleDe: 'Possessivartikel — Akkusativ',
+      titleRu: 'Притяжательные артикли, винительный падеж',
+      icon: Icons.home_work_outlined,
+      subtitle:
+          'A1: теория + 150 заданий (meinen Vater, meine Mutter, mein Kind …).',
+    ),
+    _ModuleEntry(
+      titleDe: 'Possessivartikel — Nominativ',
+      titleRu: 'Притяжательные артикли, именительный падеж',
+      icon: Icons.label_important_outline,
+      subtitle:
+          'A1: теория + 150 заданий (mein Vater, meine Mutter; alle Personen).',
+    ),
+    _ModuleEntry(
+      titleDe: 'Possessivartikel — Nom. vs. Akk.',
+      titleRu: 'Притяжательные: Nom. и Akk.',
+      icon: Icons.compare_arrows,
+      subtitle:
+          'A1: теория + 150 заданий (mein / meinen, Wer? vs. Wen?).',
+    ),
+    _ModuleEntry(
+      titleDe: 'Trennbare Verben',
+      titleRu: 'Отделяемые глаголы',
+      icon: Icons.call_split,
+      subtitle:
+          'A1: теория + 150 заданий (Präfix am Ende: aufstehen, anrufen, einkaufen …).',
     ),
   ];
 
@@ -95,11 +144,17 @@ class HomeScreen extends StatelessWidget {
                 final page = switch (index) {
                   0 => const HoerenScreen(),
                   1 => const LesenScreen(),
-                  2 => const SchreibenScreen(),
-                  3 => const SprechenScreen(),
+                  2 => const SprechenScreen(),
+                  3 => const MixedQuizScreen(),
                   4 => const ArtikelScreen(),
                   5 => const AkkusativArtikelScreen(),
                   6 => const DativArtikelScreen(),
+                  7 => const PersonalpronomenAkkusativScreen(),
+                  8 => const PersonalpronomenDativScreen(),
+                  9 => const PossessivartikelAkkusativScreen(),
+                  10 => const PossessivartikelNominativScreen(),
+                  11 => const PossessivartikelNomAkkScreen(),
+                  12 => const TrennbareVerbenScreen(),
                   _ => const HoerenScreen(),
                 };
                 Navigator.push(

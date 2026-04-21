@@ -3,6 +3,12 @@ enum ArtikelStatsModul {
   nominativDerDieDas,
   akkusativ,
   dativ,
+  personalpronomenAkkusativ,
+  personalpronomenDativ,
+  possessivartikelAkkusativ,
+  possessivartikelNominativ,
+  possessivartikelNomAkk,
+  trennbareVerben,
 }
 
 /// Доля верных ответов в процентах (0–100), либо `null`, если ответов ещё не было.
@@ -32,6 +38,18 @@ String artikelStatistikZeileRu(int richtig, int falsch) {
         ArtikelStatsModul.dativ => 'Эксперт A1! Вы отлично знаете Artikel im Dativ.',
         ArtikelStatsModul.nominativDerDieDas =>
           'Эксперт A1! Вы отлично знаете der / die / das в Nominativ.',
+        ArtikelStatsModul.personalpronomenAkkusativ =>
+          'Эксперт A1! Personalpronomen im Akkusativ — ваша сильная сторона.',
+        ArtikelStatsModul.personalpronomenDativ =>
+          'Эксперт A1! Dativ-местоимения — ваша сильная сторона.',
+        ArtikelStatsModul.possessivartikelAkkusativ =>
+          'Эксперт A1! Possessivartikel im Akkusativ — отлично.',
+        ArtikelStatsModul.possessivartikelNominativ =>
+          'Эксперт A1! Possessivartikel im Nominativ — отлично.',
+        ArtikelStatsModul.possessivartikelNomAkk =>
+          'Эксперт A1! Вы отлично различаете Nom. и Akk. у притяжательных артиклей.',
+        ArtikelStatsModul.trennbareVerben =>
+          'Эксперт A1! Отделяемые глаголы и порядок слов — ваша сильная сторона.',
       },
     );
   }

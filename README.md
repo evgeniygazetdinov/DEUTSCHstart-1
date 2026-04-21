@@ -1,6 +1,6 @@
 # test_DEUTSCH_start
 
- Hören, Lesen, Schreiben, Sprechen (Flutter).
+Flutter-приложение для подготовки к **Start Deutsch 1 / A1**: аудирование, чтение, говорение и грамматические блоки.
 
 ## Quick start
 
@@ -18,7 +18,7 @@ chmod +x setup.sh
    ** Clone the repository**
    git clone https://github.com/evgeniygazetdinov/test_DEUTSCH_start.git
    cd test_DEUTSCH_start
-   
+
    ** Install dependencies**
    flutter pub get
 
@@ -32,11 +32,17 @@ chmod +x setup.sh
 
 ## Модули
 
-- **Hören** — аудирование (картинки, richtig/falsch)
-- **Lesen** — чтение (richtig/falsch, сопоставление)
-- **Schreiben** — анкета и короткое письмо (~30 слов)
-- **Sprechen** — говорение (знакомство, темы, вежливые формулы)
-- **Bestimmer Artikell** - конкретные упраженения на der\das\die
-- **Artikell Akkusativ** - дательный падеж
-- **Akkusativ im Dativ** -винительный и дательный
+**Экзаменационные части**
 
+- **Hören** — аудирование (картинки, richtig/falsch, выбор)
+- **Lesen** — чтение (richtig/falsch, сопоставление)
+- **Sprechen** — говорение (знакомство, темы, вежливые формулы)
+
+**Грамматика (A1)**
+
+- **Artikel** — der / die / das в именительном падеже
+- **Artikel im Akkusativ** — артикль в винительном падеже
+- **Artikel im Dativ** — артикль в дательном падеже
+- **Personalpronomen — Akkusativ / Dativ** — личные местоимения
+- **Possessivartikel** — притяжательные артикли (Akk., Nom., сравнение Nom. vs Akk.)
+- **Trennbare Verben** — отделяемые глаголы (Präfix в конце предложения)
