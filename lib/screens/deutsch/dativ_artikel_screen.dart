@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../data/dativ_artikel_questions.dart';
 import '../../data/dativ_artikel_theory.dart';
+import '../../l10n/app_locale_scope.dart';
 import '../../utils/artikel_stats_feedback.dart';
+import '../../widgets/language_switch_button.dart';
+import '../../widgets/theory_tab_content.dart';
 
 /// Теория + упражнения Artikel im Dativ (A1 / Start Deutsch 1).
 class DativArtikelScreen extends StatefulWidget {
@@ -94,24 +97,27 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
     });
   }
 
-  String _weiterButtonLabel() {
+  String _weiterButtonLabel(BuildContext context) {
+    final s = context.s;
     final q = _queue.first;
     if (_queue.length == 1 && _showResult && _picked == q.correctIndex) {
-      return 'Fertig';
+      return s.fertig;
     }
-    return 'Weiter';
+    return s.weiter();
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = context.s;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Artikel im Dativ — A1'),
+        actions: const [LanguageSwitchButton()],
         bottom: TabBar(
           controller: _tabs,
           tabs: [
-            const Tab(text: 'Теория'),
-            Tab(text: 'Fragen ($_zielAnzahl)'),
+            Tab(text: s.theoryTab),
+            Tab(text: s.fragenTab(_zielAnzahl)),
           ],
         ),
       ),
@@ -126,53 +132,10 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
   }
 
   Widget _buildTheoryTab(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [
-        Text(
-          'Artikel im Dativ',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Start Deutsch 1: Wem?, Präpositionen, Verben, Wo? Вторая вкладка — 150 заданий.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-        ),
-        const SizedBox(height: 16),
-        for (final sec in kDativArtikelTheorySections) ...[
-          Card(
-            margin: const EdgeInsets.only(bottom: 10),
-            child: ExpansionTile(
-              initiallyExpanded: sec.title.startsWith('1.'),
-              title: Text(
-                sec.title,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: SelectableText(
-                      sec.body,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            height: 1.45,
-                            fontFamily: 'monospace',
-                            fontFamilyFallback: const ['monospace'],
-                          ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
+    return TheoryTabContent(
+      headline: 'Artikel im Dativ',
+      intro: context.s.datTheoryIntro,
+      sections: kDativArtikelTheorySections,
     );
   }
 
@@ -180,7 +143,7 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
     final scheme = Theme.of(context).colorScheme;
     if (_atEnd) {
       final p = artikelAntwortProzent(_richtig, _falsch) ?? 0;
-      final fb = artikelFeedbackNachProzent(p, ArtikelStatsModul.dativ);
+      final fb = context.s.artikelFeedback(p, ArtikelStatsModul.dativ);
       return Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -190,13 +153,13 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
               Icon(Icons.check_circle_outline, size: 64, color: scheme.primary),
               const SizedBox(height: 16),
               Text(
-                'Alle $_zielAnzahl Aufgaben durch',
+                context.s.allAufgabenDone(_zielAnzahl),
                 style: Theme.of(context).textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               Text(
-                artikelStatistikZeileRu(_richtig, _falsch),
+                context.s.statsLine(_richtig, _falsch),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -216,7 +179,7 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
               ),
               const SizedBox(height: 12),
               Text(
-                'Сверьтесь с разделом «Теория» при необходимости.',
+                context.s.theoryHintDone,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -225,7 +188,7 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: _restartFragen,
-                child: const Text('Noch einmal'),
+                child: Text(context.s.nochEinmal),
               ),
             ],
           ),
@@ -246,7 +209,7 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              artikelStatistikZeileRu(_richtig, _falsch),
+              context.s.statsLine(_richtig, _falsch),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
@@ -259,8 +222,7 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
             children: [
               Text(
-                'При необходимости откройте вкладку «Теория». '
-                'При ошибке задание вернётся позже в очередь.',
+                context.s.theoryHintQueue,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -268,8 +230,12 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
               const SizedBox(height: 12),
               Chip(
                 label: Text(
-                  '${dativArtikelTeilLabelDe(q.teil)} · Nr. ${q.nr}/$_zielAnzahl · '
-                  'noch ${_queue.length}',
+                  context.s.chipProgress(
+                    dativArtikelTeilLabelDe(q.teil),
+                    q.nr,
+                    _zielAnzahl,
+                    _queue.length,
+                  ),
                 ),
                 visualDensity: VisualDensity.compact,
               ),
@@ -288,7 +254,7 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
               ),
               const SizedBox(height: 16),
               Text(
-                'Wählen Sie:',
+                context.s.choosePrompt,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 10),
@@ -307,7 +273,7 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
               if (_showResult) ...[
                 const SizedBox(height: 20),
                 Text(
-                  correct ? 'Richtig ✓' : 'Nicht richtig.',
+                  correct ? context.s.correctLabel : context.s.incorrectLabel,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -316,7 +282,7 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Lösung:',
+                  context.s.solutionLabel,
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
                 const SizedBox(height: 4),
@@ -342,7 +308,7 @@ class _DativArtikelScreenState extends State<DativArtikelScreen>
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _nextQ,
-                    child: Text(_weiterButtonLabel()),
+                    child: Text(_weiterButtonLabel(context)),
                   ),
                 ),
               ),

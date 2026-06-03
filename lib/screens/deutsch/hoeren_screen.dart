@@ -6,6 +6,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../data/hoeren_exercises.dart';
 import '../../services/linux_shell_tts.dart';
+import '../../l10n/app_locale_scope.dart';
+import '../../widgets/language_switch_button.dart';
 import '../../widgets/tappable_hortext.dart';
 
 /// Модуль «Аудирование»: диалоги/объявления → выбор A/B/C или richtig/falsch.
@@ -76,20 +78,21 @@ class _HoerenScreenState extends State<HoerenScreen> {
     return ((_index + 0.5) / n).clamp(0.0, 1.0);
   }
 
-  String _primaryButtonLabel() {
-    if (_atEnd) return 'Fertig';
+  String _primaryButtonLabel(BuildContext context) {
+    final s = context.s;
+    if (_atEnd) return s.fertig;
     final cur = _current;
     final total = _exercises.length;
     if (cur is HoerenPictureExercise) {
       final nr = cur.rounds.length;
       if (_pictureSelected == null) {
-        return 'Weiter (Aufgabe ${_index + 1}/$total)';
+        return s.weiterAufgabe(_index + 1, total);
       }
       if (_pictureRound < nr - 1) {
-        return 'Nächste Frage (${_pictureRound + 2}/$nr)';
+        return s.naechsteFrage(_pictureRound + 2, nr);
       }
     }
-    return 'Weiter (${_index + 1}/$total)';
+    return s.weiterProgress(_index + 1, total);
   }
 
   @override
@@ -145,7 +148,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
       setState(() => _isSpeaking = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Озвучка: $msg'),
+          content: Text(context.s.ttsError(msg)),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -188,11 +191,8 @@ class _HoerenScreenState extends State<HoerenScreen> {
       if (!ok) {
         setState(() => _isSpeaking = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'На Linux нужен синтез речи: установите пакет espeak-ng '
-              '(например: sudo apt install espeak-ng).',
-            ),
+          SnackBar(
+            content: Text(context.s.hoerenLinuxTts),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -256,10 +256,11 @@ class _HoerenScreenState extends State<HoerenScreen> {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hören — Аудирование'),
+        title: Text(context.s.hoerenAppBar),
         actions: [
+          const LanguageSwitchButton(),
           IconButton(
-            tooltip: 'Neue Reihenfolge',
+            tooltip: context.s.shuffleTooltip,
             onPressed: _reshuffle,
             icon: const Icon(Icons.shuffle_rounded),
           ),
@@ -279,7 +280,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _canGoNext ? _nextExercise : null,
-                      child: Text(_primaryButtonLabel()),
+                      child: Text(_primaryButtonLabel(context)),
                     ),
                   ),
                 ),
@@ -298,12 +299,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Задания из Teil 1–3 и бонус — в случайном порядке. У каждого задания шесть подвопросов '
-              '(картинки: шесть раундов A–B–C; richtig/falsch — шесть утверждений; бонус — шесть блоков). '
-              'Слушайте текст (play), затем отвечайте. Пунктир — перевод слова. '
-              'В A–B–C нажмите круг с буквой слева. '
-              'Случайный котик в конце — только если за всю серию нет ни одной ошибки '
-              'ни в шести вопросах A–C, ни в шести richtig/falsch (бонус без оценки на кота не влияет).',
+              context.s.hoerenIntro,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -333,13 +329,11 @@ class _HoerenScreenState extends State<HoerenScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Runde zu Ende',
+              context.s.rundeZuEnde,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Нажмите «shuffle» на панели сверху, чтобы пройти те же задания в новом порядке.',
-            ),
+            Text(context.s.hoerenShuffleHint),
             if (earnedCat) ...[
               const SizedBox(height: 16),
               Center(
@@ -375,8 +369,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Случайный котик — за серию из ${_exercises.length} заданий без единой ошибки '
-                'в блоках A–C и richtig/falsch.',
+                context.s.hoerenCatPerfect(_exercises.length),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -399,7 +392,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Котик только при идеальном результате',
+                      context.s.hoerenCatTitle,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
@@ -407,9 +400,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Была хотя бы одна ошибка в шести вопросах с картинками (A–B–C) '
-                      'или в шести утверждениях richtig/falsch. Пройдите серию снова '
-                      '(shuffle) и ответьте на всё верно — тогда появится случайный кот.',
+                      context.s.hoerenCatMissed,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: scheme.onSurfaceVariant,
@@ -464,7 +455,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
                       ),
                 );
                 final play = IconButton.filledTonal(
-                  tooltip: _isSpeaking ? 'Stopp' : 'Anhören',
+                  tooltip: _isSpeaking ? context.s.stopp : context.s.listenHortext,
                   onPressed: _toggleHortextAudio,
                   icon: Icon(
                     _isSpeaking ? Icons.stop_rounded : Icons.play_arrow_rounded,
@@ -514,7 +505,10 @@ class _HoerenScreenState extends State<HoerenScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Chip(
-              label: Text('Frage ${_pictureRound + 1}/${e.rounds.length}'),
+              label: Text(context.s.frageLabel(
+                _pictureRound + 1,
+                e.rounds.length,
+              )),
               visualDensity: VisualDensity.compact,
             ),
           ],
@@ -545,8 +539,8 @@ class _HoerenScreenState extends State<HoerenScreen> {
           const SizedBox(height: 8),
           Text(
             _pictureSelected == round.correctIndex
-                ? 'Richtig ✓'
-                : 'Nicht richtig.',
+                ? context.s.correctLabel
+                : context.s.incorrectLabel,
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: _pictureSelected == round.correctIndex
@@ -649,7 +643,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TappableHortext(
-          text: 'Richtig oder falsch?',
+          text: context.s.richtigOderFalsch,
           wordHints: e.wordHints,
           style: Theme.of(context).textTheme.titleSmall,
         ),
@@ -667,7 +661,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
             children: [
               _rfButton(
                 context,
-                label: 'richtig',
+                label: context.s.richtig,
                 isRichtigButton: true,
                 correctIsRichtig: e.items[j].correctIsRichtig,
                 picked: _rfPicked[j],
@@ -676,7 +670,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
               const SizedBox(width: 10),
               _rfButton(
                 context,
-                label: 'falsch',
+                label: context.s.falsch,
                 isRichtigButton: false,
                 correctIsRichtig: e.items[j].correctIsRichtig,
                 picked: _rfPicked[j],
@@ -749,7 +743,7 @@ class _HoerenScreenState extends State<HoerenScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TappableHortext(
-          text: 'Zum Üben (kein Prüfungsformat)',
+          text: context.s.zumUeben,
           wordHints: e.wordHints,
           style: Theme.of(context).textTheme.titleSmall,
         ),

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_locale_scope.dart';
+import '../widgets/language_switch_button.dart';
 import 'deutsch/hoeren_screen.dart';
 import 'deutsch/lesen_screen.dart';
 import 'deutsch/sprechen_screen.dart';
@@ -16,121 +19,112 @@ import 'deutsch/mixed_quiz_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const _modules = <_ModuleEntry>[
-    _ModuleEntry(
-      titleDe: 'Hören',
-      titleRu: 'Аудирование',
-      icon: Icons.headphones_outlined,
-      subtitle:
-          'Диалоги и объявления: правильная картинка, richtig/falsch или выбор.',
-    ),
-    _ModuleEntry(
-      titleDe: 'Lesen',
-      titleRu: 'Чтение',
-      icon: Icons.menu_book_outlined,
-      subtitle: 'Объявления, письма, таблички: richtig/falsch или сопоставление.',
-    ),
-    _ModuleEntry(
-      titleDe: 'Sprechen',
-      titleRu: 'Говорение',
-      icon: Icons.record_voice_over_outlined,
-      subtitle:
-          'Знакомство (буквы, числа), тематические карточки, вежливые просьбы.',
-    ),
-    _ModuleEntry(
-      titleDe: 'Mix — Grammatik',
-      titleRu: 'Общий микс',
-      icon: Icons.shuffle,
-      subtitle:
-          '30 случайных вопросов из всех грамматических тем; статистика и приоритет ошибок.',
-    ),
-    _ModuleEntry(
-      titleDe: 'Artikel',
-      titleRu: 'Артикли',
-      icon: Icons.article_outlined,
-      subtitle:
-          'der / die / das: 150 существительных, озвучка слова и полной формы.',
-    ),
-    _ModuleEntry(
-      titleDe: 'Artikel im Akkusativ',
-      titleRu: 'Артикль, винительный падеж',
-      icon: Icons.view_week_outlined,
-      subtitle:
-          'A1: теория + 100 заданий + бонус «Диалоги» (всего 112 карточек).',
-    ),
-    _ModuleEntry(
-      titleDe: 'Artikel im Dativ',
-      titleRu: 'Артикль, дательный падеж',
-      icon: Icons.alt_route_outlined,
-      subtitle:
-          'A1: теория + 150 заданий (Wem?, Präpositionen, Verben, Wo?, Plural).',
-    ),
-    _ModuleEntry(
-      titleDe: 'Personalpronomen — Akkusativ',
-      titleRu: 'Личные местоимения, винительный падеж',
-      icon: Icons.person_outline,
-      subtitle:
-          'A1: теория + 150 заданий (mich, dich, ihn; Verben; Präpositionen).',
-    ),
-    _ModuleEntry(
-      titleDe: 'Personalpronomen — Dativ',
-      titleRu: 'Личные местоимения, дательный падеж',
-      icon: Icons.people_outline,
-      subtitle:
-          'A1: теория + 150 заданий (mir, dir, ihm; Verben; Präpositionen).',
-    ),
-    _ModuleEntry(
-      titleDe: 'Possessivartikel — Akkusativ',
-      titleRu: 'Притяжательные артикли, винительный падеж',
-      icon: Icons.home_work_outlined,
-      subtitle:
-          'A1: теория + 150 заданий (meinen Vater, meine Mutter, mein Kind …).',
-    ),
-    _ModuleEntry(
-      titleDe: 'Possessivartikel — Nominativ',
-      titleRu: 'Притяжательные артикли, именительный падеж',
-      icon: Icons.label_important_outline,
-      subtitle:
-          'A1: теория + 150 заданий (mein Vater, meine Mutter; alle Personen).',
-    ),
-    _ModuleEntry(
-      titleDe: 'Possessivartikel — Nom. vs. Akk.',
-      titleRu: 'Притяжательные: Nom. и Akk.',
-      icon: Icons.compare_arrows,
-      subtitle:
-          'A1: теория + 150 заданий (mein / meinen, Wer? vs. Wen?).',
-    ),
-    _ModuleEntry(
-      titleDe: 'Trennbare Verben',
-      titleRu: 'Отделяемые глаголы',
-      icon: Icons.call_split,
-      subtitle:
-          'A1: теория + 150 заданий (Präfix am Ende: aufstehen, anrufen, einkaufen …).',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final s = context.s;
+    final modules = <_ModuleEntry>[
+      _ModuleEntry(
+        titleDe: 'Hören',
+        titleLocalized: s.moduleHoerenRu,
+        icon: Icons.headphones_outlined,
+        subtitle: s.subHoeren,
+      ),
+      _ModuleEntry(
+        titleDe: 'Lesen',
+        titleLocalized: s.moduleLesenRu,
+        icon: Icons.menu_book_outlined,
+        subtitle: s.subLesen,
+      ),
+      _ModuleEntry(
+        titleDe: 'Sprechen',
+        titleLocalized: s.moduleSprechenRu,
+        icon: Icons.record_voice_over_outlined,
+        subtitle: s.subSprechen,
+      ),
+      _ModuleEntry(
+        titleDe: 'Mix — Grammatik',
+        titleLocalized: s.moduleMixRu,
+        icon: Icons.shuffle,
+        subtitle: s.subMix,
+      ),
+      _ModuleEntry(
+        titleDe: 'Artikel',
+        titleLocalized: s.moduleArtikelRu,
+        icon: Icons.article_outlined,
+        subtitle: s.subArtikel,
+      ),
+      _ModuleEntry(
+        titleDe: 'Artikel im Akkusativ',
+        titleLocalized: s.moduleAkkArtikelRu,
+        icon: Icons.view_week_outlined,
+        subtitle: s.subAkkArtikel,
+      ),
+      _ModuleEntry(
+        titleDe: 'Artikel im Dativ',
+        titleLocalized: s.moduleDatArtikelRu,
+        icon: Icons.alt_route_outlined,
+        subtitle: s.subDatArtikel,
+      ),
+      _ModuleEntry(
+        titleDe: 'Personalpronomen — Akkusativ',
+        titleLocalized: s.modulePersAkkRu,
+        icon: Icons.person_outline,
+        subtitle: s.subPersAkk,
+      ),
+      _ModuleEntry(
+        titleDe: 'Personalpronomen — Dativ',
+        titleLocalized: s.modulePersDatRu,
+        icon: Icons.people_outline,
+        subtitle: s.subPersDat,
+      ),
+      _ModuleEntry(
+        titleDe: 'Possessivartikel — Akkusativ',
+        titleLocalized: s.modulePossAkkRu,
+        icon: Icons.home_work_outlined,
+        subtitle: s.subPossAkk,
+      ),
+      _ModuleEntry(
+        titleDe: 'Possessivartikel — Nominativ',
+        titleLocalized: s.modulePossNomRu,
+        icon: Icons.label_important_outline,
+        subtitle: s.subPossNom,
+      ),
+      _ModuleEntry(
+        titleDe: 'Possessivartikel — Nom. vs. Akk.',
+        titleLocalized: s.modulePossNomAkkRu,
+        icon: Icons.compare_arrows,
+        subtitle: s.subPossNomAkk,
+      ),
+      _ModuleEntry(
+        titleDe: 'Trennbare Verben',
+        titleLocalized: s.moduleTrennbarRu,
+        icon: Icons.call_split,
+        subtitle: s.subTrennbar,
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('test_DEUTSCH_start'),
+        title: Text(s.appTitle),
+        actions: const [LanguageSwitchButton()],
       ),
       body: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        itemCount: _modules.length,
+        itemCount: modules.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          final m = _modules[index];
+          final m = modules[index];
           return Card(
             clipBehavior: Clip.antiAlias,
             child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               leading: CircleAvatar(
                 radius: 26,
                 child: Icon(m.icon, size: 28),
               ),
               title: Text(
-                '${m.titleDe} — ${m.titleRu}',
+                s.moduleTitle(m.titleDe, m.titleLocalized),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -173,13 +167,13 @@ class HomeScreen extends StatelessWidget {
 class _ModuleEntry {
   const _ModuleEntry({
     required this.titleDe,
-    required this.titleRu,
+    required this.titleLocalized,
     required this.icon,
     required this.subtitle,
   });
 
   final String titleDe;
-  final String titleRu;
+  final String titleLocalized;
   final IconData icon;
   final String subtitle;
 }

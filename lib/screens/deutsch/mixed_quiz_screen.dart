@@ -3,27 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../data/mixed_quiz_models.dart';
+import '../../l10n/app_locale_scope.dart';
 import '../../services/mixed_quiz_repository.dart';
+import '../../widgets/language_switch_button.dart';
 
 enum _MixedPhase { intro, loading, playing, finished }
-
-String _sessionRecommendationRu(Map<MixedQuizModule, int> wrongByModule) {
-  final bad = wrongByModule.entries.where((e) => e.value > 0).toList()
-    ..sort((a, b) => b.value.compareTo(a.value));
-  if (bad.isEmpty) {
-    return 'В этой сессии ошибок по темам нет — отличный результат.';
-  }
-  final buf = StringBuffer('Рекомендуем повторить:\n');
-  for (final e in bad.take(4)) {
-    buf.writeln(
-      '• ${mixedQuizModuleLabelRu(e.key)} — ошибок в этом проходе: ${e.value}',
-    );
-  }
-  buf.write(
-    '\nПри следующем запуске микса чаще будут попадаться вопросы из «слабых» тем и карточек, где вы уже ошибались.',
-  );
-  return buf.toString();
-}
 
 /// 30 случайных вопросов из всех грамматических модулей; статистика и приоритет ошибок.
 class MixedQuizScreen extends StatefulWidget {
@@ -128,13 +112,14 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
     }
   }
 
-  String _weiterLabel() {
-    if (_queue == null || _queue!.isEmpty) return 'Weiter';
+  String _weiterLabel(BuildContext context) {
+    final s = context.s;
+    if (_queue == null || _queue!.isEmpty) return s.weiter();
     final q = _queue!.first;
     if (_queue!.length == 1 && _showResult && _picked == q.correctIndex) {
-      return 'Fertig';
+      return s.fertig;
     }
-    return 'Weiter';
+    return s.weiter();
   }
 
   @override
@@ -146,9 +131,11 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = context.s;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mix — 30 Fragen (Grammatik)'),
+        title: Text(s.mixAppBar),
+        actions: const [LanguageSwitchButton()],
       ),
       body: switch (_phase) {
         _MixedPhase.intro => _buildIntro(context, scheme),
@@ -160,26 +147,25 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
   }
 
   Widget _buildIntro(BuildContext context, ColorScheme scheme) {
+    final s = context.s;
     final cum = _cumulative;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       children: [
         Text(
-          'Общий микс',
+          s.mixTitle,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
         ),
         const SizedBox(height: 10),
         Text(
-          '30 случайных карточек из всех грамматических модулей (артикли, местоимения, '
-          'притяжательные, отделяемые глаголы). Ответы сохраняются: темы и конкретные '
-          'вопросы, где вы чаще ошибаетесь, чаще попадут в следующий микс.',
+          s.mixIntro,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.45),
         ),
         const SizedBox(height: 20),
         Text(
-          'Накопленно по модулям',
+          s.mixCumulativeTitle,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -202,15 +188,17 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Text(
-                          '${mixedQuizModuleLabelRu(m)}: '
-                          'верно ${cum.moduleStats[m]!.right}, '
-                          'неверно ${cum.moduleStats[m]!.wrong}',
+                          s.mixCumulativeLine(
+                            m,
+                            cum.moduleStats[m]!.right,
+                            cum.moduleStats[m]!.wrong,
+                          ),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
-                  if (cum.moduleStats.values.every((s) => s.total == 0))
+                  if (cum.moduleStats.values.every((st) => st.total == 0))
                     Text(
-                      'Пока нет данных — пройдите первый микс.',
+                      s.mixNoData,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -223,7 +211,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
         FilledButton.icon(
           onPressed: _startSession,
           icon: const Icon(Icons.play_arrow),
-          label: const Text('30 Fragen starten'),
+          label: Text(s.mixStartButton),
         ),
       ],
     );
@@ -233,6 +221,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
     if (_atEnd || _current == null) {
       return const SizedBox.shrink();
     }
+    final s = context.s;
     final q = _current!;
     final correct = _picked == q.correctIndex;
 
@@ -246,7 +235,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Верно: $_richtig · Неверно: $_falsch · осталось ${_queue!.length}',
+              s.statsLineRemaining(_richtig, _falsch, _queue!.length),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
@@ -260,8 +249,11 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
             children: [
               Chip(
                 label: Text(
-                  '${mixedQuizModuleLabelDe(q.module)} · Nr. ${q.sourceNr} · '
-                  'noch ${_queue!.length}',
+                  s.mixChipLabel(
+                    mixedQuizModuleLabelDe(q.module),
+                    q.sourceNr,
+                    _queue!.length,
+                  ),
                 ),
                 visualDensity: VisualDensity.compact,
               ),
@@ -280,7 +272,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Wählen Sie:',
+                s.choosePrompt,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 10),
@@ -299,7 +291,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
               if (_showResult) ...[
                 const SizedBox(height: 20),
                 Text(
-                  correct ? 'Richtig ✓' : 'Nicht richtig.',
+                  correct ? s.correctLabel : s.incorrectLabel,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -308,7 +300,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Lösung:',
+                  s.solutionLabel,
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
                 const SizedBox(height: 4),
@@ -334,7 +326,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _nextQ,
-                    child: Text(_weiterLabel()),
+                    child: Text(_weiterLabel(context)),
                   ),
                 ),
               ),
@@ -345,6 +337,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
   }
 
   Widget _buildFinished(BuildContext context, ColorScheme scheme) {
+    final s = context.s;
     final p = _richtig + _falsch == 0
         ? 0
         : ((_richtig * 100) / (_richtig + _falsch)).round();
@@ -354,13 +347,13 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
         Icon(Icons.check_circle_outline, size: 56, color: scheme.primary),
         const SizedBox(height: 16),
         Text(
-          'Сессия завершена',
+          s.mixSessionDone,
           style: Theme.of(context).textTheme.titleLarge,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
         Text(
-          'Верно: $_richtig · Неверно: $_falsch · $p%',
+          s.statsLineWithPercent(_richtig, _falsch, '$p%'),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -368,7 +361,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
         ),
         const SizedBox(height: 20),
         Text(
-          _sessionRecommendationRu(_sessionWrongByModule),
+          s.sessionRecommendation(_sessionWrongByModule),
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.4),
         ),
         const SizedBox(height: 28),
@@ -380,7 +373,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
             });
             _reloadCumulative();
           },
-          child: const Text('Zurück zum Start'),
+          child: Text(s.mixBackToStart),
         ),
       ],
     );

@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import '../../l10n/app_locale_scope.dart';
 import '../../utils/lesen_speech_compare.dart';
+import '../../widgets/language_switch_button.dart';
 import '../../utils/utf16_sanitize.dart';
 
 /// Модуль «Чтение»: объявления, письма, таблички → richtig/falsch или сопоставление.
@@ -58,7 +61,7 @@ Ihr Team vom Buchladen „Leselust“
             final msg = sanitizeWellFormedUtf16(e.errorMsg);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Spracherkennung: $msg'),
+                content: Text(context.s.speechError(msg)),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -84,7 +87,7 @@ Ihr Team vom Buchladen „Leselust“
     } catch (e, st) {
       ok = false;
       locale = null;
-      debugPrint('speech_to_text initialize: $e\n$st');
+      if (kDebugMode) debugPrint('speech_to_text initialize: $e\n$st');
     }
     if (!mounted) return;
     setState(() {
@@ -109,9 +112,7 @@ Ihr Team vom Buchladen „Leselust“
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          isCorrect
-              ? 'Richtig — gut gelesen!'
-              : 'Noch einmal: der Text sagt "geschlossen" am Samstag.',
+          isCorrect ? context.s.lesenCorrectSnack : context.s.lesenCheckWrongSnack,
         ),
         behavior: SnackBarBehavior.floating,
       ),
@@ -146,10 +147,10 @@ Ihr Team vom Buchladen „Leselust“
           });
           if (!mounted) return;
           final msg = sim >= 0.78
-              ? 'Sehr nah am Text — weiter so!'
+              ? context.s.speechMatchHigh
               : sim >= 0.55
-                  ? 'Schon gut — versuchen Sie es noch einmal etwas deutlicher.'
-                  : 'Viel Unterschied — langsamer lesen und erneut aufnehmen.';
+                  ? context.s.speechMatchMid
+                  : context.s.speechMatchLow;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
           );
@@ -164,12 +165,12 @@ Ihr Team vom Buchladen „Leselust“
       ),
     );
     } catch (e, st) {
-      debugPrint('speech_to_text listen: $e\n$st');
+      if (kDebugMode) debugPrint('speech_to_text listen: $e\n$st');
       if (mounted) {
         setState(() => _listening = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mikrofon / Spracherkennung auf dieser Plattform nicht verfügbar.'),
+          SnackBar(
+            content: Text(context.s.lesenMicError),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -180,13 +181,15 @@ Ihr Team vom Buchladen „Leselust“
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Lesen — Чтение')),
+      appBar: AppBar(
+        title: Text(context.s.lesenAppBar),
+        actions: const [LanguageSwitchButton()],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            'Lesen Sie die Texte (Aushänge, Briefe, Schilder). '
-            'Entscheiden Sie: richtig oder falsch — oder ordnen Sie Text und Situation zu.',
+            context.s.lesenInstructionDe,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontStyle: FontStyle.italic,
                   height: 1.4,
@@ -194,9 +197,7 @@ Ihr Team vom Buchladen „Leselust“
           ),
           const SizedBox(height: 8),
           Text(
-            'Здесь вы читаете объявления, письма и таблички и отвечаете «richtig» или «falsch», '
-            'либо сопоставляете текст и ситуацию. Ниже можно прочитать фразу вслух в микрофон — '
-            'приложение сравнит распознанный текст с эталоном (Android / iOS; на Linux обычно недоступно).',
+            context.s.lesenIntro,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -221,32 +222,32 @@ Ihr Team vom Buchladen „Leselust“
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Aussage', style: Theme.of(context).textTheme.titleSmall),
+                  Text(context.s.aussage, style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 8),
                   const Text(
                     _statement,
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
-                  Text('Ist die Aussage richtig oder falsch?', style: Theme.of(context).textTheme.labelLarge),
+                  Text(context.s.istAussageRichtig, style: Theme.of(context).textTheme.labelLarge),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       FilledButton(
                         onPressed: () => _check(true),
-                        child: const Text('richtig'),
+                        child: Text(context.s.richtig),
                       ),
                       const SizedBox(width: 12),
                       FilledButton.tonal(
                         onPressed: () => _check(false),
-                        child: const Text('falsch'),
+                        child: Text(context.s.falsch),
                       ),
                     ],
                   ),
                   if (_answered != null) ...[
                     const SizedBox(height: 12),
                     Text(
-                      _answered! ? 'Sehr gut!' : 'Tipp: nochmal den ersten Satz lesen.',
+                      _answered! ? context.s.lesenAnswerGood : context.s.lesenAnswerHint,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -274,8 +275,7 @@ Ihr Team vom Buchladen „Leselust“
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Распознавание речи недоступно на этой платформе или нет языка «de» в системе. '
-            'Попробуйте Android / iOS и установите немецкий для ввода речи в настройках.',
+            context.s.lesenSpeechUnavailable,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -289,7 +289,7 @@ Ihr Team vom Buchladen „Leselust“
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Laut lesen', style: Theme.of(context).textTheme.titleSmall),
+            Text(context.s.lautLesen, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             Text(
               _speechTarget,
@@ -300,7 +300,7 @@ Ihr Team vom Buchladen „Leselust“
             ),
             const SizedBox(height: 4),
             Text(
-              'Нажмите микрофон и прочитайте предложение. Остановка — снова на кнопку.',
+              context.s.lesenMicHint,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -311,7 +311,7 @@ Ihr Team vom Buchladen „Leselust“
                 FilledButton.tonalIcon(
                   onPressed: _toggleListen,
                   icon: Icon(_listening ? Icons.stop_rounded : Icons.mic_rounded),
-                  label: Text(_listening ? 'Stopp' : 'Aufnehmen'),
+                  label: Text(_listening ? context.s.stopp : context.s.aufnehmen),
                 ),
                 if (_listening) ...[
                   const SizedBox(width: 12),
@@ -325,15 +325,14 @@ Ihr Team vom Buchladen „Leselust“
             ),
             if (_heard.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text('Erkannt:', style: Theme.of(context).textTheme.labelLarge),
+              Text(context.s.erkannt, style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: 4),
               Text(_heard, style: Theme.of(context).textTheme.bodyMedium),
             ],
             if (_lastSimilarity != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Übereinstimmung: ${(_lastSimilarity! * 100).round()} % '
-                '(nur grobe Schätzung, keine Prüfungsnote).',
+                context.s.uebereinstimmung((_lastSimilarity! * 100).round()),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),

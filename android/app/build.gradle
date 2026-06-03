@@ -86,7 +86,7 @@ tasks.register("copyReleaseApkToDist") {
         def src = apkFlutter.exists() ? apkFlutter : apkStd
         if (src.exists()) {
             distDir.mkdirs()
-            def out = new File(distDir, "test_deutsch_start-${ver}+${n}.apk")
+            def out = new File(distDir, "deutsch_a1_start-${ver}+${n}.apk")
             out.bytes = src.bytes
             println "Release APK copy: ${out.absolutePath}"
         } else {
@@ -104,7 +104,7 @@ tasks.register("copyReleaseBundleToDist") {
         def aab = new File(repoRoot, "build/app/outputs/bundle/release/app-release.aab")
         if (aab.exists()) {
             distDir.mkdirs()
-            def out = new File(distDir, "test_deutsch_start-${ver}+${n}.aab")
+            def out = new File(distDir, "deutsch_a1_start-${ver}+${n}.aab")
             out.bytes = aab.bytes
             println "Release AAB copy: ${out.absolutePath}"
         }

@@ -1,4 +1,4 @@
-# test_DEUTSCH_start
+# Deutsch A1 Start
 
 Flutter-приложение для подготовки к **Start Deutsch 1 / A1**: аудирование, чтение, говорение и грамматические блоки.
 
@@ -29,6 +29,7 @@ chmod +x setup.sh
    ** run on device**
    flutter run
 ```
+
 
 ## Модули
 

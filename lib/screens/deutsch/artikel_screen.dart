@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import '../../data/der_die_das_data.dart';
 import '../../data/der_die_das_theory.dart';
 import '../../services/german_word_tts.dart';
+import '../../l10n/app_locale_scope.dart';
 import '../../utils/artikel_stats_feedback.dart';
+import '../../widgets/language_switch_button.dart';
+import '../../widgets/theory_tab_content.dart';
 
 /// Теория + упражнение: артикль der / die / das для существительного.
 class ArtikelScreen extends StatefulWidget {
@@ -112,36 +115,39 @@ class _ArtikelScreenState extends State<ArtikelScreen>
     });
   }
 
-  String _weiterButtonLabel() {
+  String _weiterButtonLabel(BuildContext context) {
+    final s = context.s;
     final q = _items.first;
     if (_items.length == 1 && _showResult && _picked == q.correctIndex) {
-      return 'Fertig';
+      return s.fertig;
     }
-    return 'Weiter (noch ${_items.length})';
+    return s.weiterNoch(_items.length);
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = context.s;
     final scheme = Theme.of(context).colorScheme;
     final onUebungen = _tabs.index == 1;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Artikel — der / die / das'),
-        bottom: TabBar(
-          controller: _tabs,
-          tabs: [
-            const Tab(text: 'Теория'),
-            Tab(text: 'Übungen ($_zielAnzahl)'),
-          ],
-        ),
+        title: Text(s.artikelAppBar),
         actions: [
+          const LanguageSwitchButton(),
           if (onUebungen)
             IconButton(
-              tooltip: 'Neue Reihenfolge',
+              tooltip: s.shuffleTooltip,
               onPressed: _reshuffle,
               icon: const Icon(Icons.shuffle_rounded),
             ),
         ],
+        bottom: TabBar(
+          controller: _tabs,
+          tabs: [
+            Tab(text: s.theoryTab),
+            Tab(text: s.uebungenTab(_zielAnzahl)),
+          ],
+        ),
       ),
       body: TabBarView(
         controller: _tabs,
@@ -167,7 +173,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _next,
-                      child: Text(_weiterButtonLabel()),
+                      child: Text(_weiterButtonLabel(context)),
                     ),
                   ),
                 ),
@@ -178,60 +184,17 @@ class _ArtikelScreenState extends State<ArtikelScreen>
   }
 
   Widget _buildTheoryTab(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [
-        Text(
-          'der · die · das',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Nominativ (A1): определённый артикль. Вторая вкладка — 150 карточек с переводом и озвучкой.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-        ),
-        const SizedBox(height: 16),
-        for (final sec in kDerDieDasTheorySections) ...[
-          Card(
-            margin: const EdgeInsets.only(bottom: 10),
-            child: ExpansionTile(
-              initiallyExpanded: sec.title.startsWith('1.'),
-              title: Text(
-                sec.title,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: SelectableText(
-                      sec.body,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            height: 1.45,
-                            fontFamily: 'monospace',
-                            fontFamilyFallback: const ['monospace'],
-                          ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
+    return TheoryTabContent(
+      headline: 'der · die · das',
+      intro: context.s.artikelTheoryIntro,
+      sections: kDerDieDasTheorySections,
     );
   }
 
   Widget _buildDone(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final p = artikelAntwortProzent(_richtig, _falsch) ?? 0;
-    final fb = artikelFeedbackNachProzent(p, ArtikelStatsModul.nominativDerDieDas);
+    final fb = context.s.artikelFeedback(p, ArtikelStatsModul.nominativDerDieDas);
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -242,13 +205,13 @@ class _ArtikelScreenState extends State<ArtikelScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Alle $_zielAnzahl Fragen durch',
+                  context.s.allFragenDone(_zielAnzahl),
                   style: Theme.of(context).textTheme.titleLarge,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  artikelStatistikZeileRu(_richtig, _falsch),
+                  context.s.statsLine(_richtig, _falsch),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -268,7 +231,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Нажмите shuffle на панели, чтобы начать новый проход и обнулить статистику.',
+                  context.s.shuffleHintArtikel,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -290,9 +253,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Выберите артикль для слова. Под ним — перевод на русский. '
-          'Динамик произносит только немецкое слово, без артикля. '
-          'При ошибке карточка вернётся позже в очередь.',
+          context.s.artikelExerciseHint,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
                 height: 1.35,
@@ -304,7 +265,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
         ),
         const SizedBox(height: 8),
         Text(
-          artikelStatistikZeileRu(_richtig, _falsch),
+          context.s.statsLine(_richtig, _falsch),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
@@ -318,7 +279,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcher Artikel?',
+                  context.s.welcherArtikel,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -351,7 +312,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
                       ),
                     ),
                     IconButton.filledTonal(
-                      tooltip: 'Wort anhören (ohne Artikel)',
+                      tooltip: context.s.wordListenTooltip(true),
                       onPressed: _speakPrompt,
                       icon: const Icon(Icons.volume_up_rounded),
                     ),
@@ -363,7 +324,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
                     children: [
                       Expanded(
                         child: Text(
-                          correct ? 'Richtig ✓' : 'Nicht richtig.',
+                          correct ? context.s.correctLabel : context.s.incorrectLabel,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
@@ -376,7 +337,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
                       TextButton.icon(
                         onPressed: _speakFullAnswer,
                         icon: const Icon(Icons.record_voice_over_outlined, size: 20),
-                        label: const Text('Mit Artikel'),
+                        label: Text(context.s.mitArtikel),
                       ),
                     ],
                   ),
@@ -394,7 +355,7 @@ class _ArtikelScreenState extends State<ArtikelScreen>
         ),
         const SizedBox(height: 20),
         Text(
-          'Antwort',
+          context.s.antwort,
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 10),

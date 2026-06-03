@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../data/hoeren_glossary.dart';
+import '../l10n/app_locale_scope.dart';
 import '../services/german_word_tts.dart';
 import '../services/hoeren_online_translate.dart';
 import '../utils/utf16_sanitize.dart';
@@ -257,6 +258,7 @@ class _HoerenWordSheetState extends State<_HoerenWordSheet> {
   Widget build(BuildContext context) {
     final theme = widget.theme;
     final variant = theme.colorScheme.onSurfaceVariant;
+    final s = AppLocaleScope.stringsOf(context);
 
     Widget translationBlock() {
       if (widget.localRu != null) {
@@ -277,7 +279,7 @@ class _HoerenWordSheetState extends State<_HoerenWordSheet> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Запрашиваем перевод…',
+                s.translationLoading,
                 style: theme.textTheme.bodyLarge,
               ),
             ),
@@ -294,7 +296,7 @@ class _HoerenWordSheetState extends State<_HoerenWordSheet> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Перевод из интернета (MyMemory), может быть неточным.',
+              s.translationOnlineNote,
               style: theme.textTheme.bodySmall?.copyWith(color: variant),
             ),
           ],
@@ -304,14 +306,13 @@ class _HoerenWordSheetState extends State<_HoerenWordSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Не удалось получить перевод (сеть или лимит сервиса). '
-            'Можно добавить слово в словарь приложения или в wordHints у задания.',
+            s.translationFailed,
             style: theme.textTheme.bodyLarge,
           ),
           TextButton.icon(
             onPressed: _retryRemote,
             icon: const Icon(Icons.translate),
-            label: const Text('Повторить'),
+            label: Text(s.retry),
           ),
         ],
       );
@@ -341,14 +342,14 @@ class _HoerenWordSheetState extends State<_HoerenWordSheet> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Noch einmal hören',
+                  tooltip: s.wordListenTooltip(false),
                   onPressed: () => GermanWordTts.instance.speak(widget.surface),
                   icon: const Icon(Icons.volume_up_rounded),
                 ),
               ],
             ),
             Text(
-              'Произношение при открытии. Нет в словаре — пробуем перевод онлайн.',
+              s.pronunciationNote,
               style: theme.textTheme.bodySmall?.copyWith(color: variant),
             ),
             const SizedBox(height: 12),
