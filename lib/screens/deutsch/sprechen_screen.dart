@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_locale_scope.dart';
+import '../../widgets/language_switch_button.dart';
+
 /// Модуль «Говорение»: знакомство, тематические карточки, вежливые формулы.
 class SprechenScreen extends StatelessWidget {
   const SprechenScreen({super.key});
@@ -23,11 +26,13 @@ class SprechenScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.s;
     return DefaultTabController(
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Sprechen — Говорение'),
+          title: Text(s.sprechenAppBar),
+          actions: const [LanguageSwitchButton()],
           bottom: const TabBar(
             isScrollable: true,
             tabs: [
@@ -37,30 +42,27 @@ class SprechenScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
+        body: TabBarView(
           children: [
             _TeilPanel(
-              title: 'Teil 1 — Знакомство',
+              title: s.sprechenTeil1Title,
               subtitle:
                   'Buchstabieren, Zahlen: Sie stellen sich vor und beantworten einfache Fragen zur Person.',
-              ruHint:
-                  'Эта часть: знакомство (буквы по алфавиту, числа — телефон, время, цена).',
+              hint: s.sprechenTeil1Hint,
               points: _teil1,
             ),
             _TeilPanel(
-              title: 'Teil 2 — Themenkarten',
+              title: s.sprechenTeil2Title,
               subtitle:
                   'Sie ziehen eine Karte mit einem Thema und sprechen frei dazu.',
-              ruHint:
-                  'Карточки с вопросами: короткий связный монолог по теме.',
+              hint: s.sprechenTeil2Hint,
               points: _teil2,
             ),
             _TeilPanel(
-              title: 'Teil 3 — Höfliche Bitten / Formeln',
+              title: s.sprechenTeil3Title,
               subtitle:
                   'Feststehende Redewendungen für Alltagssituationen (Bahnhof, Restaurant, Behörde …).',
-              ruHint:
-                  'Вежливые просьбы и устойчивые формулы в типичных ситуациях.',
+              hint: s.sprechenTeil3Hint,
               points: _teil3,
             ),
           ],
@@ -74,13 +76,13 @@ class _TeilPanel extends StatelessWidget {
   const _TeilPanel({
     required this.title,
     required this.subtitle,
-    required this.ruHint,
+    required this.hint,
     required this.points,
   });
 
   final String title;
   final String subtitle;
-  final String ruHint;
+  final String hint;
   final List<String> points;
 
   @override
@@ -93,7 +95,7 @@ class _TeilPanel extends StatelessWidget {
         Text(subtitle, style: Theme.of(context).textTheme.bodyLarge),
         const SizedBox(height: 8),
         Text(
-          ruHint,
+          hint,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -104,7 +106,10 @@ class _TeilPanel extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 12),
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text(p, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.45)),
+              child: Text(
+                p,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.45),
+              ),
             ),
           ),
         ),

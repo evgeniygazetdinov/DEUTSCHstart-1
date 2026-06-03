@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../data/possessivartikel_nom_akk_questions.dart';
 import '../../data/possessivartikel_nom_akk_theory.dart';
+import '../../l10n/app_locale_scope.dart';
 import '../../utils/artikel_stats_feedback.dart';
+import '../../widgets/language_switch_button.dart';
+import '../../widgets/theory_tab_content.dart';
 
 /// Теория + упражнения Possessivartikel: Nominativ vs. Akkusativ (A1).
 class PossessivartikelNomAkkScreen extends StatefulWidget {
@@ -95,24 +98,27 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
     });
   }
 
-  String _weiterButtonLabel() {
+  String _weiterButtonLabel(BuildContext context) {
+    final s = context.s;
     final q = _queue.first;
     if (_queue.length == 1 && _showResult && _picked == q.correctIndex) {
-      return 'Fertig';
+      return s.fertig;
     }
-    return 'Weiter';
+    return s.weiter();
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = context.s;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Possessivartikel — Nom. vs. Akk. — A1'),
+        actions: const [LanguageSwitchButton()],
         bottom: TabBar(
           controller: _tabs,
           tabs: [
-            const Tab(text: 'Теория'),
-            Tab(text: 'Fragen ($_zielAnzahl)'),
+            Tab(text: s.theoryTab),
+            Tab(text: s.fragenTab(_zielAnzahl)),
           ],
         ),
       ),
@@ -127,53 +133,10 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
   }
 
   Widget _buildTheoryTab(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [
-        Text(
-          'Possessivartikel: Nominativ vs. Akkusativ',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Wer/Was vs. Wen/Was, -en nur maskulin im Akk. — 150 заданий.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-        ),
-        const SizedBox(height: 16),
-        for (final sec in kPossessivartikelNomAkkTheorySections) ...[
-          Card(
-            margin: const EdgeInsets.only(bottom: 10),
-            child: ExpansionTile(
-              initiallyExpanded: sec.title.startsWith('1.'),
-              title: Text(
-                sec.title,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: SelectableText(
-                      sec.body,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            height: 1.45,
-                            fontFamily: 'monospace',
-                            fontFamilyFallback: const ['monospace'],
-                          ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
+    return TheoryTabContent(
+      headline: 'Possessivartikel: Nominativ vs. Akkusativ',
+      intro: context.s.possNomAkkTheoryIntro,
+      sections: kPossessivartikelNomAkkTheorySections,
     );
   }
 
@@ -181,7 +144,7 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
     final scheme = Theme.of(context).colorScheme;
     if (_atEnd) {
       final p = artikelAntwortProzent(_richtig, _falsch) ?? 0;
-      final fb = artikelFeedbackNachProzent(
+      final fb = context.s.artikelFeedback(
         p,
         ArtikelStatsModul.possessivartikelNomAkk,
       );
@@ -194,13 +157,13 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
               Icon(Icons.check_circle_outline, size: 64, color: scheme.primary),
               const SizedBox(height: 16),
               Text(
-                'Alle $_zielAnzahl Aufgaben durch',
+                context.s.allAufgabenDone(_zielAnzahl),
                 style: Theme.of(context).textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               Text(
-                artikelStatistikZeileRu(_richtig, _falsch),
+                context.s.statsLine(_richtig, _falsch),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -220,7 +183,7 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
               ),
               const SizedBox(height: 12),
               Text(
-                'Сверьтесь с разделом «Теория» при необходимости.',
+                context.s.theoryHintDone,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -229,7 +192,7 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: _restartFragen,
-                child: const Text('Noch einmal'),
+                child: Text(context.s.nochEinmal),
               ),
             ],
           ),
@@ -250,7 +213,7 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              artikelStatistikZeileRu(_richtig, _falsch),
+              context.s.statsLine(_richtig, _falsch),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
@@ -263,8 +226,7 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
             children: [
               Text(
-                'При необходимости откройте вкладку «Теория». '
-                'При ошибке задание вернётся позже в очередь.',
+                context.s.theoryHintQueue,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -272,8 +234,12 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
               const SizedBox(height: 12),
               Chip(
                 label: Text(
-                  '${possessivartikelNomAkkTeilLabelDe(q.teil)} · Nr. ${q.nr}/$_zielAnzahl · '
-                  'noch ${_queue.length}',
+                  context.s.chipProgress(
+                    possessivartikelNomAkkTeilLabelDe(q.teil),
+                    q.nr,
+                    _zielAnzahl,
+                    _queue.length,
+                  ),
                 ),
                 visualDensity: VisualDensity.compact,
               ),
@@ -292,7 +258,7 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
               ),
               const SizedBox(height: 16),
               Text(
-                'Wählen Sie:',
+                context.s.choosePrompt,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 10),
@@ -311,7 +277,7 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
               if (_showResult) ...[
                 const SizedBox(height: 20),
                 Text(
-                  correct ? 'Richtig ✓' : 'Nicht richtig.',
+                  correct ? context.s.correctLabel : context.s.incorrectLabel,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -320,7 +286,7 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Lösung:',
+                  context.s.solutionLabel,
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
                 const SizedBox(height: 4),
@@ -346,7 +312,7 @@ class _PossessivartikelNomAkkScreenState extends State<PossessivartikelNomAkkScr
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _nextQ,
-                    child: Text(_weiterButtonLabel()),
+                    child: Text(_weiterButtonLabel(context)),
                   ),
                 ),
               ),

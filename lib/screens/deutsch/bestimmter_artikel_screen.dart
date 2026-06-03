@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../data/bestimmter_artikel_questions.dart';
 import '../../data/bestimmter_artikel_theory.dart';
+import '../../l10n/app_locale_scope.dart';
+import '../../widgets/language_switch_button.dart';
+import '../../widgets/theory_tab_content.dart';
 
 /// Теория + 50 заданий по bestimmtem Artikel (A1).
 class BestimmterArtikelScreen extends StatefulWidget {
@@ -67,14 +70,16 @@ class _BestimmterArtikelScreenState extends State<BestimmterArtikelScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = context.s;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bestimmter Artikel — A1'),
+        actions: const [LanguageSwitchButton()],
         bottom: TabBar(
           controller: _tabs,
-          tabs: const [
-            Tab(text: 'Теория'),
-            Tab(text: '50 Fragen'),
+          tabs: [
+            Tab(text: s.theoryTab),
+            Tab(text: s.fragen50Tab),
           ],
         ),
       ),
@@ -89,53 +94,10 @@ class _BestimmterArtikelScreenState extends State<BestimmterArtikelScreen>
   }
 
   Widget _buildTheoryTab(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [
-        Text(
-          'Bestimmter Artikel (der, die, das, den)',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Start Deutsch 1 — теория и сноска перед упражнениями (вторая вкладка).',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-        ),
-        const SizedBox(height: 16),
-        for (final sec in kBestimmterArtikelTheorySections) ...[
-          Card(
-            margin: const EdgeInsets.only(bottom: 10),
-            child: ExpansionTile(
-              initiallyExpanded: sec.title.startsWith('1.'),
-              title: Text(
-                sec.title,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: SelectableText(
-                      sec.body,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            height: 1.45,
-                            fontFamily: 'monospace',
-                            fontFamilyFallback: const ['monospace'],
-                          ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
+    return TheoryTabContent(
+      headline: 'Bestimmter Artikel (der, die, das, den)',
+      intro: context.s.bestimmterTheoryIntro,
+      sections: kBestimmterArtikelTheorySections,
     );
   }
 
@@ -151,18 +113,18 @@ class _BestimmterArtikelScreenState extends State<BestimmterArtikelScreen>
               Icon(Icons.check_circle_outline, size: 64, color: scheme.primary),
               const SizedBox(height: 16),
               Text(
-                'Alle 50 Aufgaben durch',
+                context.s.allAufgabenDone(50),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Сверьтесь с ключом в карточках заданий или пройдите снова.',
+              Text(
+                context.s.bestimmterDoneHint,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: _restartFragen,
-                child: const Text('Noch einmal'),
+                child: Text(context.s.nochEinmal),
               ),
             ],
           ),
@@ -181,7 +143,7 @@ class _BestimmterArtikelScreenState extends State<BestimmterArtikelScreen>
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             children: [
               Text(
-                'Сначала при необходимости откройте вкладку «Теория».',
+                context.s.bestimmterQueueHint,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -206,7 +168,7 @@ class _BestimmterArtikelScreenState extends State<BestimmterArtikelScreen>
               ),
               const SizedBox(height: 16),
               Text(
-                'Wählen Sie:',
+                context.s.choosePrompt,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 10),
@@ -225,7 +187,7 @@ class _BestimmterArtikelScreenState extends State<BestimmterArtikelScreen>
               if (_showResult) ...[
                 const SizedBox(height: 20),
                 Text(
-                  correct ? 'Richtig ✓' : 'Nicht richtig.',
+                  correct ? context.s.correctLabel : context.s.incorrectLabel,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -234,7 +196,7 @@ class _BestimmterArtikelScreenState extends State<BestimmterArtikelScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Lösung:',
+                  context.s.solutionLabel,
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
                 const SizedBox(height: 4),
@@ -261,7 +223,9 @@ class _BestimmterArtikelScreenState extends State<BestimmterArtikelScreen>
                   child: FilledButton(
                     onPressed: _nextQ,
                     child: Text(
-                      q.nr >= _fragen.length ? 'Fertig' : 'Weiter',
+                      q.nr >= _fragen.length
+                          ? context.s.fertig
+                          : context.s.weiter(),
                     ),
                   ),
                 ),

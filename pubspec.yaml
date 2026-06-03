@@ -1,5 +1,5 @@
 name: test_deutsch_start
-description: "test_DEUTSCH_start — Flutter app."
+description: "Deutsch A1 Start — Flutter app."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -30,12 +30,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   confetti: ^0.7.0
   http: ^1.2.2
   cupertino_icons: ^1.0.8
   flutter_tts: ^4.2.5
   speech_to_text: ^7.3.0
   shared_preferences: ^2.3.5
+  yandex_mobileads: ^8.0.0
 
 dev_dependencies:
   flutter_test:
