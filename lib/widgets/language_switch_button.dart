@@ -2,36 +2,35 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
 import '../l10n/app_locale_scope.dart';
+import '../theme/apple_theme.dart';
 
-/// Кнопка RU ↔ EN в AppBar; по умолчанию русский.
+/// Кнопка RU ↔ EN в стиле iOS.
 class LanguageSwitchButton extends StatelessWidget {
   const LanguageSwitchButton({super.key});
 
   @override
   Widget build(BuildContext context) {
     final ctrl = context.localeController;
-    final s = context.s;
     final isRu = ctrl.language == AppLanguage.ru;
-    final scheme = Theme.of(context).colorScheme;
 
-    return IconButton(
-      tooltip: isRu ? s.languageSwitchToEn : s.languageSwitchToRu,
-      onPressed: ctrl.toggleLanguage,
-      icon: DecoratedBox(
-        decoration: BoxDecoration(
-          color: scheme.primaryContainer.withValues(alpha: 0.55),
-          border: Border.all(color: scheme.outlineVariant),
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: Material(
+        color: const Color(0xFFE5E5EA),
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
           borderRadius: BorderRadius.circular(8),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Text(
-            isRu ? 'RU' : 'EN',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-              color: scheme.onPrimaryContainer,
+          onTap: ctrl.toggleLanguage,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Text(
+              isRu ? 'RU' : 'EN',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.08,
+                color: AppleTheme.blue,
+              ),
             ),
           ),
         ),

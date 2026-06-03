@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
 import '../l10n/app_locale_scope.dart';
+import '../theme/apple_theme.dart';
+import '../widgets/apple_navigation.dart';
+import '../widgets/ios_grouped_section.dart';
 import '../widgets/language_switch_button.dart';
 import 'deutsch/hoeren_screen.dart';
 import 'deutsch/lesen_screen.dart';
@@ -18,6 +22,22 @@ import 'deutsch/mixed_quiz_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  static const _iconColors = [
+    Color(0xFF5856D6),
+    Color(0xFF34C759),
+    Color(0xFFFF9500),
+    Color(0xFFAF52DE),
+    Color(0xFF007AFF),
+    Color(0xFF32ADE6),
+    Color(0xFFFF2D55),
+    Color(0xFF30B0C7),
+    Color(0xFFA2845E),
+    Color(0xFF5AC8FA),
+    Color(0xFFFF6482),
+    Color(0xFF64D2FF),
+    Color(0xFFAC8E68),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -103,62 +123,108 @@ class HomeScreen extends StatelessWidget {
       ),
     ];
 
+    Widget pageFor(int index) => switch (index) {
+          0 => const HoerenScreen(),
+          1 => const LesenScreen(),
+          2 => const SprechenScreen(),
+          3 => const MixedQuizScreen(),
+          4 => const ArtikelScreen(),
+          5 => const AkkusativArtikelScreen(),
+          6 => const DativArtikelScreen(),
+          7 => const PersonalpronomenAkkusativScreen(),
+          8 => const PersonalpronomenDativScreen(),
+          9 => const PossessivartikelAkkusativScreen(),
+          10 => const PossessivartikelNominativScreen(),
+          11 => const PossessivartikelNomAkkScreen(),
+          12 => const TrennbareVerbenScreen(),
+          _ => const HoerenScreen(),
+        };
+
+    IosListRow row(_ModuleEntry m, int index) => IosListRow(
+          icon: m.icon,
+          iconBackground: _iconColors[index % _iconColors.length],
+          title: s.moduleTitle(m.titleDe, m.titleLocalized),
+          subtitle: m.subtitle,
+          onTap: () => Navigator.push(context, applePageRoute(pageFor(index))),
+        );
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(s.appTitle),
-        actions: const [LanguageSwitchButton()],
-      ),
-      body: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        itemCount: modules.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final m = modules[index];
-          return Card(
-            clipBehavior: Clip.antiAlias,
-            child: ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              leading: CircleAvatar(
-                radius: 26,
-                child: Icon(m.icon, size: 28),
-              ),
-              title: Text(
-                s.moduleTitle(m.titleDe, m.titleLocalized),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(m.subtitle),
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                final page = switch (index) {
-                  0 => const HoerenScreen(),
-                  1 => const LesenScreen(),
-                  2 => const SprechenScreen(),
-                  3 => const MixedQuizScreen(),
-                  4 => const ArtikelScreen(),
-                  5 => const AkkusativArtikelScreen(),
-                  6 => const DativArtikelScreen(),
-                  7 => const PersonalpronomenAkkusativScreen(),
-                  8 => const PersonalpronomenDativScreen(),
-                  9 => const PossessivartikelAkkusativScreen(),
-                  10 => const PossessivartikelNominativScreen(),
-                  11 => const PossessivartikelNomAkkScreen(),
-                  12 => const TrennbareVerbenScreen(),
-                  _ => const HoerenScreen(),
-                };
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(builder: (_) => page),
-                );
-              },
+      backgroundColor: AppleTheme.groupedBackground,
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          slivers: [
+            const SliverAppBar(
+              pinned: false,
+              floating: true,
+              snap: true,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              backgroundColor: AppleTheme.groupedBackground,
+              surfaceTintColor: Colors.transparent,
+              actions: [
+                LanguageSwitchButton(),
+                SizedBox(width: 8),
+              ],
+              expandedHeight: 0,
+              toolbarHeight: 52,
             ),
-          );
-        },
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppleTheme.secondaryGrouped,
+                    borderRadius:
+                        BorderRadius.circular(AppleTheme.cornerRadius),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                    child: Text(
+                      s.appTitle,
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                            color: AppleTheme.primaryLabel,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppleTheme.groupedMargin,
+                ),
+                child: IosGroupedSection(
+                  header: context.localeController.language ==
+                          AppLanguage.ru
+                      ? 'Навыки'
+                      : 'Skills',
+                  children: [
+                    row(modules[0], 0),
+                    row(modules[1], 1),
+                    row(modules[2], 2),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppleTheme.groupedMargin,
+                ),
+                child: IosGroupedSection(
+                  header: 'Grammatik',
+                  children: [
+                    for (var i = 3; i < modules.length; i++) row(modules[i], i),
+                  ],
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
       ),
     );
   }

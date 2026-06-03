@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_locale.dart';
 import 'l10n/app_locale_scope.dart';
 import 'screens/home_screen.dart';
+import 'theme/apple_theme.dart';
 import 'services/yandex_ads_service.dart';
 import 'widgets/app_with_yandex_banner.dart';
 
@@ -52,6 +53,7 @@ class _MyAppState extends State<MyApp> {
     if (ctrl == null) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
+        theme: AppleTheme.light(),
         localizationsDelegates: _appLocalizationsDelegates,
         supportedLocales: _appSupportedLocales,
         home: const Scaffold(
@@ -70,10 +72,7 @@ class _MyAppState extends State<MyApp> {
             locale: ctrl.locale,
             localizationsDelegates: _appLocalizationsDelegates,
             supportedLocales: _appSupportedLocales,
-            theme: ThemeData(
-              primarySwatch: Colors.blue,
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-            ),
+            theme: AppleTheme.light(),
             builder: (context, child) {
               if (child == null) {
                 return const SizedBox.shrink();
