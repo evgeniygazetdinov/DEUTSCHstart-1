@@ -174,6 +174,13 @@ abstract final class AppleTheme {
       letterSpacing: 0.35,
       color: primaryLabel,
     ),
+    headlineSmall: TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0,
+      height: 1.2,
+      color: primaryLabel,
+    ),
     titleLarge: TextStyle(
       fontSize: 20,
       fontWeight: FontWeight.w600,
@@ -190,6 +197,7 @@ abstract final class AppleTheme {
       fontSize: 15,
       fontWeight: FontWeight.w600,
       letterSpacing: -0.24,
+      color: primaryLabel,
     ),
     bodyLarge: TextStyle(
       fontSize: 17,

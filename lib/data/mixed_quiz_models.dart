@@ -1,5 +1,6 @@
 /// Источники вопросов для общего микс-теста (только грамматические модули).
 enum MixedQuizModule {
+  derDieDas,
   bestimmterArtikel,
   akkusativArtikel,
   dativArtikel,
@@ -13,6 +14,7 @@ enum MixedQuizModule {
 
 String mixedQuizModuleLabelDe(MixedQuizModule m) {
   return switch (m) {
+    MixedQuizModule.derDieDas => 'Artikel der/die/das',
     MixedQuizModule.bestimmterArtikel => 'Artikel (Nom.)',
     MixedQuizModule.akkusativArtikel => 'Artikel Akk.',
     MixedQuizModule.dativArtikel => 'Artikel Dat.',
@@ -27,6 +29,7 @@ String mixedQuizModuleLabelDe(MixedQuizModule m) {
 
 String mixedQuizModuleLabelRu(MixedQuizModule m) {
   return switch (m) {
+    MixedQuizModule.derDieDas => 'Артикли der/die/das',
     MixedQuizModule.bestimmterArtikel => 'Артикли (им. п.)',
     MixedQuizModule.akkusativArtikel => 'Артикль, вин. п.',
     MixedQuizModule.dativArtikel => 'Артикль, дат. п.',
@@ -60,4 +63,15 @@ class MixedQuizItem {
   final String solutionDe;
 
   String get stableId => '${module.name}_$sourceNr';
+
+  /// Слово (der/die/das) или фраза с пропуском для отображения в Mix.
+  String get questionDisplay {
+    if (module == MixedQuizModule.derDieDas) {
+      final w = afterGap.trim();
+      if (w.isNotEmpty) return w;
+      final parts = solutionDe.trim().split(RegExp(r'\s+'));
+      return parts.length > 1 ? parts.sublist(1).join(' ') : solutionDe;
+    }
+    return '${beforeGap}___$afterGap'.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
 }

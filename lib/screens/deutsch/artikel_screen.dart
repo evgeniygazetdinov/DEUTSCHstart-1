@@ -6,7 +6,9 @@ import '../../data/der_die_das_data.dart';
 import '../../data/der_die_das_theory.dart';
 import '../../services/german_word_tts.dart';
 import '../../l10n/app_locale_scope.dart';
+import '../../services/grammar_stats_service.dart';
 import '../../utils/artikel_stats_feedback.dart';
+import '../../utils/record_grammar_answer.dart';
 import '../../widgets/language_switch_button.dart';
 import '../../widgets/theory_tab_content.dart';
 
@@ -83,7 +85,14 @@ class _ArtikelScreenState extends State<ArtikelScreen>
 
   void _pick(int i) {
     if (_showResult || _current == null) return;
-    final ok = i == _current!.correctIndex;
+    final q = _current!;
+    final ok = i == q.correctIndex;
+    recordGrammarAnswer(
+      module: GrammarStatsModule.derDieDas,
+      ok: ok,
+      options: _optLabels,
+      correctIndex: q.correctIndex,
+    );
     setState(() {
       _picked = i;
       _showResult = true;
@@ -156,7 +165,11 @@ class _ArtikelScreenState extends State<ArtikelScreen>
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              child: _atEnd ? _buildDone(context) : _buildQuestion(context, scheme),
+              child: _atEnd
+                  ? _buildDone(context)
+                  : SingleChildScrollView(
+                      child: _buildQuestion(context, scheme),
+                    ),
             ),
           ),
         ],
@@ -272,91 +285,95 @@ class _ArtikelScreenState extends State<ArtikelScreen>
               ),
         ),
         const SizedBox(height: 20),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.s.welcherArtikel,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+        Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 96),
+          padding: const EdgeInsets.fromLTRB(20, 20, 12, 20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFD6EBFF),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF007AFF), width: 1.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                context.s.welcherArtikel,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF3C3C43),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            q.prompt,
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.25,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            q.translationRu,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                  fontStyle: FontStyle.italic,
-                                  height: 1.35,
-                                ),
-                          ),
-                        ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      q.prompt,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
+                        color: Color(0xFF000000),
                       ),
                     ),
-                    IconButton.filledTonal(
-                      tooltip: context.s.wordListenTooltip(true),
-                      onPressed: _speakPrompt,
-                      icon: const Icon(Icons.volume_up_rounded),
+                  ),
+                  IconButton.filledTonal(
+                    tooltip: context.s.wordListenTooltip(true),
+                    onPressed: _speakPrompt,
+                    icon: const Icon(Icons.volume_up_rounded),
+                  ),
+                ],
+              ),
+              if (_showResult) ...[
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        correct ? context.s.correctLabel : context.s.incorrectLabel,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: correct
+                              ? Colors.green.shade700
+                              : scheme.error,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: _speakFullAnswer,
+                      icon: const Icon(Icons.record_voice_over_outlined, size: 20),
+                      label: Text(context.s.mitArtikel),
                     ),
                   ],
                 ),
-                if (_showResult) ...[
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          correct ? context.s.correctLabel : context.s.incorrectLabel,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: correct
-                                ? Colors.green.shade700
-                                : scheme.error,
-                          ),
-                        ),
-                      ),
-                      TextButton.icon(
-                        onPressed: _speakFullAnswer,
-                        icon: const Icon(Icons.record_voice_over_outlined, size: 20),
-                        label: Text(context.s.mitArtikel),
-                      ),
-                    ],
+                const SizedBox(height: 6),
+                Text(
+                  q.fullAnswer,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF000000),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    q.fullAnswer,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                  ),
-                ],
+                ),
               ],
-            ),
+            ],
           ),
         ),
         const SizedBox(height: 20),
         Text(
           context.s.antwort,
-          style: Theme.of(context).textTheme.titleSmall,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF000000),
+          ),
         ),
         const SizedBox(height: 10),
         for (var i = 0; i < 3; i++)
@@ -431,9 +448,11 @@ class _ArtikelScreenState extends State<ArtikelScreen>
               ),
               Text(
                 label,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF000000),
+                ),
               ),
             ],
           ),
