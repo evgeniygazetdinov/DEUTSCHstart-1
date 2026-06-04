@@ -4,13 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test_deutsch_start/main.dart';
 
 void main() {
-  testWidgets('Home shows Hören, Lesen, Sprechen', (WidgetTester tester) async {
+  testWidgets('Home shows grammar modules', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Hören'), findsOneWidget);
-    expect(find.textContaining('Lesen'), findsOneWidget);
-    expect(find.textContaining('Sprechen'), findsOneWidget);
+    expect(find.textContaining('Mix'), findsOneWidget);
+    expect(find.textContaining('Artikel'), findsWidgets);
+    expect(find.textContaining('Grammatik'), findsOneWidget);
+    expect(find.textContaining('Hören'), findsNothing);
+    expect(find.textContaining('Lesen'), findsNothing);
+    expect(find.textContaining('Sprechen'), findsNothing);
   });
 }

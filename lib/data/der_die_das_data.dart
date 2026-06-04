@@ -1,3 +1,5 @@
+part 'der_die_das_a1_supplement.dart';
+
 /// Упражнения: артикль перед существительным (der / die / das).
 class DerDieDasQuestion {
   const DerDieDasQuestion({
@@ -26,9 +28,10 @@ String derDieDasPromptForTts(String prompt) {
   return (i >= 0 ? prompt.substring(0, i) : prompt).trim();
 }
 
-/// Все карточки: предметы → время/природа → исключения и быт.
+/// Все карточки: базовый набор + лексика A1.
 List<DerDieDasQuestion> allDerDieDasQuestions() {
-  return const [
+  return [
+    ...const [
     DerDieDasQuestion(
       prompt: 'Tisch',
       correctIndex: 0,
@@ -929,5 +932,7 @@ List<DerDieDasQuestion> allDerDieDasQuestions() {
       fullAnswer: 'das Herz',
       translationRu: 'сердце',
     ),
+    ],
+    ..._derDieDasA1Supplement,
   ];
 }

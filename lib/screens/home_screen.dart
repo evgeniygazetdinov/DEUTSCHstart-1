@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../l10n/app_locale.dart';
 import '../l10n/app_locale_scope.dart';
+import '../services/grammar_stats_service.dart';
 import '../theme/apple_theme.dart';
 import '../widgets/apple_navigation.dart';
 import '../widgets/ios_grouped_section.dart';
 import '../widgets/language_switch_button.dart';
-import 'deutsch/hoeren_screen.dart';
-import 'deutsch/lesen_screen.dart';
-import 'deutsch/sprechen_screen.dart';
+import '../widgets/module_stats_bar.dart';
 import 'deutsch/akkusativ_artikel_screen.dart';
 import 'deutsch/artikel_screen.dart';
 import 'deutsch/dativ_artikel_screen.dart';
@@ -20,13 +18,17 @@ import 'deutsch/possessivartikel_nom_akk_screen.dart';
 import 'deutsch/trennbare_verben_screen.dart';
 import 'deutsch/mixed_quiz_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  GrammarStatsState? _stats;
+
   static const _iconColors = [
-    Color(0xFF5856D6),
-    Color(0xFF34C759),
-    Color(0xFFFF9500),
     Color(0xFFAF52DE),
     Color(0xFF007AFF),
     Color(0xFF32ADE6),
@@ -39,114 +41,148 @@ class HomeScreen extends StatelessWidget {
     Color(0xFFAC8E68),
   ];
 
+  static const _statsModules = [
+    GrammarStatsModule.mix,
+    GrammarStatsModule.derDieDas,
+    GrammarStatsModule.akkusativArtikel,
+    GrammarStatsModule.dativArtikel,
+    GrammarStatsModule.personalpronomenAkkusativ,
+    GrammarStatsModule.personalpronomenDativ,
+    GrammarStatsModule.possessivartikelAkkusativ,
+    GrammarStatsModule.possessivartikelNominativ,
+    GrammarStatsModule.possessivartikelNomAkk,
+    GrammarStatsModule.trennbareVerben,
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _reloadStats();
+  }
+
+  Future<void> _reloadStats() async {
+    final st = await GrammarStatsService.instance.load();
+    if (!mounted) return;
+    setState(() => _stats = st);
+  }
+
+  Future<void> _openModule(Widget page) async {
+    await Navigator.push(context, applePageRoute(page));
+    await _reloadStats();
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = context.s;
+    final stats = _stats;
+    final reco = stats == null
+        ? ''
+        : GrammarStatsService.instance.homeRecommendation(s, stats);
+
     final modules = <_ModuleEntry>[
-      _ModuleEntry(
-        titleDe: 'Hören',
-        titleLocalized: s.moduleHoerenRu,
-        icon: Icons.headphones_outlined,
-        subtitle: s.subHoeren,
-      ),
-      _ModuleEntry(
-        titleDe: 'Lesen',
-        titleLocalized: s.moduleLesenRu,
-        icon: Icons.menu_book_outlined,
-        subtitle: s.subLesen,
-      ),
-      _ModuleEntry(
-        titleDe: 'Sprechen',
-        titleLocalized: s.moduleSprechenRu,
-        icon: Icons.record_voice_over_outlined,
-        subtitle: s.subSprechen,
-      ),
       _ModuleEntry(
         titleDe: 'Mix — Grammatik',
         titleLocalized: s.moduleMixRu,
         icon: Icons.shuffle,
         subtitle: s.subMix,
+        page: const MixedQuizScreen(),
       ),
       _ModuleEntry(
         titleDe: 'Artikel',
         titleLocalized: s.moduleArtikelRu,
         icon: Icons.article_outlined,
         subtitle: s.subArtikel,
+        page: const ArtikelScreen(),
       ),
       _ModuleEntry(
         titleDe: 'Artikel im Akkusativ',
         titleLocalized: s.moduleAkkArtikelRu,
         icon: Icons.view_week_outlined,
         subtitle: s.subAkkArtikel,
+        page: const AkkusativArtikelScreen(),
       ),
       _ModuleEntry(
         titleDe: 'Artikel im Dativ',
         titleLocalized: s.moduleDatArtikelRu,
         icon: Icons.alt_route_outlined,
         subtitle: s.subDatArtikel,
+        page: const DativArtikelScreen(),
       ),
       _ModuleEntry(
         titleDe: 'Personalpronomen — Akkusativ',
         titleLocalized: s.modulePersAkkRu,
         icon: Icons.person_outline,
         subtitle: s.subPersAkk,
+        page: const PersonalpronomenAkkusativScreen(),
       ),
       _ModuleEntry(
         titleDe: 'Personalpronomen — Dativ',
         titleLocalized: s.modulePersDatRu,
         icon: Icons.people_outline,
         subtitle: s.subPersDat,
+        page: const PersonalpronomenDativScreen(),
       ),
       _ModuleEntry(
         titleDe: 'Possessivartikel — Akkusativ',
         titleLocalized: s.modulePossAkkRu,
         icon: Icons.home_work_outlined,
         subtitle: s.subPossAkk,
+        page: const PossessivartikelAkkusativScreen(),
       ),
       _ModuleEntry(
         titleDe: 'Possessivartikel — Nominativ',
         titleLocalized: s.modulePossNomRu,
         icon: Icons.label_important_outline,
         subtitle: s.subPossNom,
+        page: const PossessivartikelNominativScreen(),
       ),
       _ModuleEntry(
         titleDe: 'Possessivartikel — Nom. vs. Akk.',
         titleLocalized: s.modulePossNomAkkRu,
         icon: Icons.compare_arrows,
         subtitle: s.subPossNomAkk,
+        page: const PossessivartikelNomAkkScreen(),
       ),
       _ModuleEntry(
         titleDe: 'Trennbare Verben',
         titleLocalized: s.moduleTrennbarRu,
         icon: Icons.call_split,
         subtitle: s.subTrennbar,
+        page: const TrennbareVerbenScreen(),
       ),
     ];
 
-    Widget pageFor(int index) => switch (index) {
-          0 => const HoerenScreen(),
-          1 => const LesenScreen(),
-          2 => const SprechenScreen(),
-          3 => const MixedQuizScreen(),
-          4 => const ArtikelScreen(),
-          5 => const AkkusativArtikelScreen(),
-          6 => const DativArtikelScreen(),
-          7 => const PersonalpronomenAkkusativScreen(),
-          8 => const PersonalpronomenDativScreen(),
-          9 => const PossessivartikelAkkusativScreen(),
-          10 => const PossessivartikelNominativScreen(),
-          11 => const PossessivartikelNomAkkScreen(),
-          12 => const TrennbareVerbenScreen(),
-          _ => const HoerenScreen(),
-        };
+    Widget moduleBlock(_ModuleEntry m, int index) {
+      final modStats =
+          stats?.modules[_statsModules[index]] ?? GrammarModuleStats();
+      final pct =
+          modStats.total == 0 ? 0 : (modStats.accuracy * 100).round();
+      final showBar = index == 0 && modStats.total > 0;
 
-    IosListRow row(_ModuleEntry m, int index) => IosListRow(
-          icon: m.icon,
-          iconBackground: _iconColors[index % _iconColors.length],
-          title: s.moduleTitle(m.titleDe, m.titleLocalized),
-          subtitle: m.subtitle,
-          onTap: () => Navigator.push(context, applePageRoute(pageFor(index))),
-        );
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (showBar)
+              ModuleStatsBar(
+                stats: modStats,
+                answersLabel: s.moduleAnswersLine(modStats.total, pct),
+              ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppleTheme.cornerRadius),
+              child: IosListRow(
+                icon: m.icon,
+                iconBackground: _iconColors[index % _iconColors.length],
+                title: s.moduleTitle(m.titleDe, m.titleLocalized),
+                subtitle: m.subtitle,
+                onTap: () => _openModule(m.page),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppleTheme.groupedBackground,
@@ -191,33 +227,67 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppleTheme.groupedMargin,
-                ),
-                child: IosGroupedSection(
-                  header: context.localeController.language ==
-                          AppLanguage.ru
-                      ? 'Навыки'
-                      : 'Skills',
-                  children: [
-                    row(modules[0], 0),
-                    row(modules[1], 1),
-                    row(modules[2], 2),
-                  ],
+            if (reco.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppleTheme.secondaryGrouped,
+                      borderRadius:
+                          BorderRadius.circular(AppleTheme.cornerRadius),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s.homeRecoTitle,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            reco,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  height: 1.4,
+                                  color: AppleTheme.secondaryLabel,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppleTheme.groupedMargin,
                 ),
-                child: IosGroupedSection(
-                  header: 'Grammatik',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (var i = 3; i < modules.length; i++) row(modules[i], i),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                      child: Text(
+                        'GRAMMATIK',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: -0.08,
+                              color: AppleTheme.secondaryLabel,
+                            ),
+                      ),
+                    ),
+                    for (var i = 0; i < modules.length; i++)
+                      moduleBlock(modules[i], i),
                   ],
                 ),
               ),
@@ -236,10 +306,12 @@ class _ModuleEntry {
     required this.titleLocalized,
     required this.icon,
     required this.subtitle,
+    required this.page,
   });
 
   final String titleDe;
   final String titleLocalized;
   final IconData icon;
   final String subtitle;
+  final Widget page;
 }

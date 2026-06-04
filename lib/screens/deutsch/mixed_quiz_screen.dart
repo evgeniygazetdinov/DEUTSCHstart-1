@@ -3,13 +3,17 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../data/mixed_quiz_models.dart';
+import '../../l10n/app_locale.dart';
 import '../../l10n/app_locale_scope.dart';
+import '../../services/grammar_stats_service.dart';
 import '../../services/mixed_quiz_repository.dart';
+import '../../theme/apple_theme.dart';
 import '../../widgets/language_switch_button.dart';
+import '../../widgets/module_stats_bar.dart';
 
 enum _MixedPhase { intro, loading, playing, finished }
 
-/// 30 случайных вопросов из всех грамматических модулей; статистика и приоритет ошибок.
+/// 30 случайных вопросов из всего грамматического пула; общая статистика.
 class MixedQuizScreen extends StatefulWidget {
   const MixedQuizScreen({super.key});
 
@@ -21,23 +25,54 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
   final Random _random = Random();
   _MixedPhase _phase = _MixedPhase.intro;
   List<MixedQuizItem>? _queue;
-  MixedQuizPersistentState? _cumulative;
+  GrammarStatsState? _stats;
   int? _picked;
   bool _showResult = false;
   int _richtig = 0;
   int _falsch = 0;
   final Map<MixedQuizModule, int> _sessionWrongByModule = {};
 
-  static const int _kTotal = 30;
+  static const int _kTotal = MixedQuizRepository.sessionSize;
 
   bool get _atEnd => _queue != null && _queue!.isEmpty;
   MixedQuizItem? get _current =>
       (_queue != null && _queue!.isNotEmpty) ? _queue!.first : null;
 
-  String _previewLine(MixedQuizItem q) {
+  bool _isDerDieDasCard(MixedQuizItem q) =>
+      q.module == MixedQuizModule.derDieDas;
+
+  String _sentencePreview(MixedQuizItem q) {
+    if (_isDerDieDasCard(q)) return q.questionDisplay;
     final mid = _picked == null ? '___' : q.options[_picked!];
-    final gap = _picked == null ? '___ ' : '$mid ';
-    return '${q.beforeGap}$gap${q.afterGap}';
+    final gap = ' $mid ';
+    return '${q.beforeGap}$gap${q.afterGap}'.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  String _appBarQuestionLine(MixedQuizItem q) {
+    final s = _sentencePreview(q);
+    return s.isNotEmpty ? s : q.solutionDe;
+  }
+
+  static const _questionPanelStyle = TextStyle(
+    fontSize: 26,
+    fontWeight: FontWeight.w700,
+    height: 1.35,
+    color: Color(0xFF000000),
+    decoration: TextDecoration.none,
+  );
+
+  static const _nounPanelStyle = TextStyle(
+    fontSize: 40,
+    fontWeight: FontWeight.w800,
+    height: 1.15,
+    color: Color(0xFF000000),
+    decoration: TextDecoration.none,
+  );
+
+  Future<void> _loadStats() async {
+    final st = await GrammarStatsService.instance.load();
+    if (!mounted) return;
+    setState(() => _stats = st);
   }
 
   Future<void> _startSession() async {
@@ -51,19 +86,11 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
     });
     final list =
         await MixedQuizRepository.instance.pickSessionQuestions(_random);
-    final cum = await MixedQuizRepository.instance.loadState();
     if (!mounted) return;
     setState(() {
       _queue = list;
-      _cumulative = cum;
       _phase = _MixedPhase.playing;
     });
-  }
-
-  Future<void> _reloadCumulative() async {
-    final cum = await MixedQuizRepository.instance.loadState();
-    if (!mounted) return;
-    setState(() => _cumulative = cum);
   }
 
   Future<void> _select(int i) async {
@@ -107,9 +134,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
         finished = true;
       }
     });
-    if (finished) {
-      _reloadCumulative();
-    }
+    if (finished) _loadStats();
   }
 
   String _weiterLabel(BuildContext context) {
@@ -125,16 +150,44 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
   @override
   void initState() {
     super.initState();
-    _reloadCumulative();
+    _loadStats();
   }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final s = context.s;
+    final playing = _phase == _MixedPhase.playing && _current != null;
+
     return Scaffold(
+      backgroundColor: AppleTheme.groupedBackground,
       appBar: AppBar(
-        title: Text(s.mixAppBar),
+        title: Text(
+          s.mixAppBar,
+          style: const TextStyle(color: Color(0xFF000000)),
+        ),
+        bottom: playing
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(52),
+                child: Container(
+                  width: double.infinity,
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  color: AppleTheme.groupedBackground,
+                  child: Text(
+                    _appBarQuestionLine(_current!),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                      color: Color(0xFF000000),
+                    ),
+                  ),
+                ),
+              )
+            : null,
         actions: const [LanguageSwitchButton()],
       ),
       body: switch (_phase) {
@@ -148,7 +201,8 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
 
   Widget _buildIntro(BuildContext context, ColorScheme scheme) {
     final s = context.s;
-    final cum = _cumulative;
+    final stats = _stats;
+    final poolSize = MixedQuizRepository.instance.poolSize;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       children: [
@@ -163,6 +217,15 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
           s.mixIntro,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.45),
         ),
+        const SizedBox(height: 8),
+        Text(
+          _ru(context)
+              ? 'В пуле сейчас $poolSize карточек.'
+              : 'Pool size: $poolSize cards.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+        ),
         const SizedBox(height: 20),
         Text(
           s.mixCumulativeTitle,
@@ -171,41 +234,25 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
               ),
         ),
         const SizedBox(height: 8),
-        if (cum == null)
+        if (stats == null)
           const Padding(
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           )
+        else if (!_hasAnyMixModuleStats(stats))
+          Text(
+            s.mixNoData,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+          )
         else
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final m in MixedQuizModule.values)
-                    if ((cum.moduleStats[m]?.total ?? 0) > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Text(
-                          s.mixCumulativeLine(
-                            m,
-                            cum.moduleStats[m]!.right,
-                            cum.moduleStats[m]!.wrong,
-                          ),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ),
-                  if (cum.moduleStats.values.every((st) => st.total == 0))
-                    Text(
-                      s.mixNoData,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                    ),
-                ],
-              ),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final m in MixedQuizModule.values)
+                if (_moduleStatsBar(context, stats, m) case final bar?) bar,
+            ],
           ),
         const SizedBox(height: 24),
         FilledButton.icon(
@@ -217,6 +264,136 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
     );
   }
 
+  bool _ru(BuildContext context) =>
+      context.localeController.language == AppLanguage.ru;
+
+  Widget? _moduleStatsBar(
+    BuildContext context,
+    GrammarStatsState stats,
+    MixedQuizModule m,
+  ) {
+    final gs = GrammarStatsService.fromMixedQuiz(m);
+    if (gs == null) return null;
+    final st = stats.modules[gs];
+    if (st == null || st.total == 0) return null;
+    final s = context.s;
+    final pct = (st.accuracy * 100).round();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ModuleStatsBar(
+        stats: st,
+        label: s.mixedQuizModuleLabel(m),
+        answersLabel: s.moduleAnswersLine(st.total, pct),
+      ),
+    );
+  }
+
+  bool _hasAnyMixModuleStats(GrammarStatsState stats) {
+    for (final m in MixedQuizModule.values) {
+      final gs = GrammarStatsService.fromMixedQuiz(m);
+      if (gs == null) continue;
+      if ((stats.modules[gs]?.total ?? 0) > 0) return true;
+    }
+    return false;
+  }
+
+  Widget _questionPanel(BuildContext context, MixedQuizItem q) {
+    final s = context.s;
+    final isNoun = _isDerDieDasCard(q);
+    final text = isNoun ? q.questionDisplay : _sentencePreview(q);
+
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 96),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+      decoration: BoxDecoration(
+        color: const Color(0xFFD6EBFF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF007AFF), width: 1.5),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (isNoun)
+            Text(
+              s.welcherArtikel,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF3C3C43),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          if (isNoun) const SizedBox(height: 12),
+          Text(
+            text,
+            textAlign: isNoun ? TextAlign.center : TextAlign.start,
+            style: isNoun ? _nounPanelStyle : _questionPanelStyle,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _answerTile({
+    required BuildContext context,
+    required ColorScheme scheme,
+    required int index,
+    required String label,
+    required bool selected,
+    required bool showResult,
+    required bool isCorrect,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    Color? border;
+    Color? bg;
+    if (showResult) {
+      if (isCorrect) {
+        border = Colors.green.shade600;
+        bg = Colors.green.shade50;
+      } else if (selected && !isCorrect) {
+        border = scheme.error;
+        bg = scheme.errorContainer.withValues(alpha: 0.35);
+      }
+    } else if (selected) {
+      border = scheme.primary;
+      bg = scheme.primaryContainer.withValues(alpha: 0.5);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: bg ?? scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: border ?? scheme.outlineVariant,
+                width: border != null ? 2 : 1,
+              ),
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF000000),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPlaying(BuildContext context, ColorScheme scheme) {
     if (_atEnd || _current == null) {
       return const SizedBox.shrink();
@@ -225,71 +402,88 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
     final q = _current!;
     final correct = _picked == q.correctIndex;
 
+    final useTiles = q.options.length <= 4;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         LinearProgressIndicator(
           value: (_richtig / _kTotal).clamp(0.0, 1.0),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Text(
+            s.statsLineRemaining(_richtig, _falsch, _queue!.length),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Text(
-              s.statsLineRemaining(_richtig, _falsch, _queue!.length),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
+            child: Chip(
+              label: Text(s.mixChipLabel(
+                mixedQuizModuleLabelDe(q.module),
+                q.sourceNr,
+                _queue!.length,
+              )),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: _questionPanel(context, q),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: Text(
+            s.choosePrompt,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF000000),
             ),
           ),
         ),
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
             children: [
-              Chip(
-                label: Text(
-                  s.mixChipLabel(
-                    mixedQuizModuleLabelDe(q.module),
-                    q.sourceNr,
-                    _queue!.length,
-                  ),
-                ),
-                visualDensity: VisualDensity.compact,
-              ),
-              const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: SelectableText(
-                    _previewLine(q),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          height: 1.4,
-                          fontWeight: FontWeight.w500,
+              if (useTiles)
+                for (var i = 0; i < q.options.length; i++)
+                  _answerTile(
+                    context: context,
+                    scheme: scheme,
+                    index: i,
+                    label: q.options[i],
+                    selected: _picked == i,
+                    showResult: _showResult,
+                    isCorrect: i == q.correctIndex,
+                    enabled: !_showResult,
+                    onTap: () => _select(i),
+                  )
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (var i = 0; i < q.options.length; i++)
+                      ChoiceChip(
+                        label: Text(
+                          q.options[i],
+                          style: const TextStyle(color: Color(0xFF000000)),
                         ),
-                  ),
+                        selected: _picked == i,
+                        onSelected: _showResult ? null : (_) => _select(i),
+                      ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                s.choosePrompt,
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (var i = 0; i < q.options.length; i++)
-                    ChoiceChip(
-                      label: Text(q.options[i]),
-                      selected: _picked == i,
-                      onSelected: _showResult ? null : (_) => _select(i),
-                    ),
-                ],
-              ),
               if (_showResult) ...[
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 Text(
                   correct ? s.correctLabel : s.incorrectLabel,
                   style: TextStyle(
@@ -301,14 +495,19 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
                 const SizedBox(height: 8),
                 Text(
                   s.solutionLabel,
-                  style: Theme.of(context).textTheme.labelLarge,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF8E8E93),
+                  ),
                 ),
                 const SizedBox(height: 4),
-                SelectableText(
+                Text(
                   q.solutionDe,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF000000),
+                  ),
                 ),
               ],
             ],
@@ -371,7 +570,7 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
               _phase = _MixedPhase.intro;
               _queue = null;
             });
-            _reloadCumulative();
+            _loadStats();
           },
           child: Text(s.mixBackToStart),
         ),
