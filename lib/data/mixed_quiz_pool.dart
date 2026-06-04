@@ -1,5 +1,6 @@
 import 'akkusativ_artikel_questions.dart';
 import 'bestimmter_artikel_questions.dart';
+import 'der_die_das_data.dart';
 import 'dativ_artikel_questions.dart';
 import 'mixed_quiz_models.dart';
 import 'personalpronomen_akkusativ_questions.dart';
@@ -10,9 +11,24 @@ import 'possessivartikel_nominativ_questions.dart';
 import 'trennbare_verben_questions.dart';
 
 /// Все карточки из грамматических модулей (без Hören/Lesen/Sprechen).
+const _derDieDasOptions = ['der', 'die', 'das'];
+
 List<MixedQuizItem> loadMixedQuizPool() {
   final out = <MixedQuizItem>[];
 
+  var nr = 0;
+  for (final q in allDerDieDasQuestions()) {
+    nr++;
+    out.add(MixedQuizItem(
+      module: MixedQuizModule.derDieDas,
+      sourceNr: nr,
+      beforeGap: '',
+      afterGap: q.prompt,
+      options: List<String>.from(_derDieDasOptions),
+      correctIndex: q.correctIndex,
+      solutionDe: q.fullAnswer,
+    ));
+  }
   for (final q in allBestimmterArtikelFragen()) {
     out.add(MixedQuizItem(
       module: MixedQuizModule.bestimmterArtikel,

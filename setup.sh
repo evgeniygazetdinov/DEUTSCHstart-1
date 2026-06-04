@@ -78,6 +78,10 @@ flutter clean
 echo -e "\n${YELLOW}Установка зависимостей...${NC}"
 flutter pub get
 
+# Иконки Android / iOS из image.png
+echo -e "\n${YELLOW}Генерация иконок приложения...${NC}"
+dart run flutter_launcher_icons
+
 # Проверка на ошибки
 echo -e "\n${YELLOW}Проверка на ошибки...${NC}"
 flutter analyze

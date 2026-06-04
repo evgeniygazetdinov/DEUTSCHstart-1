@@ -1,4 +1,5 @@
 import '../data/mixed_quiz_models.dart';
+import '../services/grammar_stats_service.dart';
 import '../utils/artikel_stats_feedback.dart';
 import 'app_locale.dart';
 
@@ -122,11 +123,11 @@ class AppStrings {
       ? 'Знакомство (буквы, числа), тематические карточки, вежливые просьбы.'
       : 'Introduction (letters, numbers), topic cards, polite phrases.';
   String get subMix => _ru
-      ? '30 случайных вопросов из всех грамматических тем; статистика и приоритет ошибок.'
-      : '30 random questions from all grammar topics; stats and weak-area priority.';
+      ? '30 случайных вопросов из всего пула (~1200+); ответы учитываются в статистике.'
+      : '30 random questions from the full pool (~1200+); answers count toward stats.';
   String get subArtikel => _ru
-      ? 'der / die / das: 150 существительных, озвучка слова и полной формы.'
-      : 'der / die / das: 150 nouns, word and full-form audio.';
+      ? 'der / die / das: 335 слов, озвучка слова и полной формы.'
+      : 'der / die / das: 335 words, word and full-form audio.';
   String get subAkkArtikel => _ru
       ? 'A1: теория + 100 заданий + бонус «Диалоги» (всего 112 карточек).'
       : 'A1: theory + 100 tasks + bonus dialogues (112 cards total).';
@@ -155,14 +156,12 @@ class AppStrings {
   // ——— Artikel (der/die/das) ———
   String get artikelAppBar => 'Artikel — der / die / das';
   String get artikelTheoryIntro => _ru
-      ? 'Nominativ (A1): определённый артикль. Вторая вкладка — 150 карточек с переводом и озвучкой.'
-      : 'Nominative (A1): definite article. Second tab — 150 cards with translation and audio.';
+      ? 'Nominativ (A1): определённый артикль. Вторая вкладка — карточки: слово и выбор der / die / das.'
+      : 'Nominative (A1): definite article. Second tab — word cards and der / die / das choice.';
   String get artikelExerciseHint => _ru
-      ? 'Выберите артикль для слова. Под ним — перевод. '
-          'Динамик произносит только немецкое слово, без артикля. '
+      ? 'Выберите артикль для слова. Динамик произносит только немецкое слово, без артикля. '
           'При ошибке карточка вернётся позже в очередь.'
-      : 'Choose the article for the word. Translation is shown below. '
-          'Audio plays the German word only, without the article. '
+      : 'Choose the article for the word. Audio plays the German word only, without the article. '
           'Wrong cards return to the queue later.';
   String get welcherArtikel => _ru ? 'Какой артикль?' : 'Which article?';
   String get antwort => _ru ? 'Ответ' : 'Answer';
@@ -213,12 +212,11 @@ class AppStrings {
   String get mixAppBar => 'Mix — 30 Fragen (Grammatik)';
   String get mixTitle => moduleMixRu;
   String get mixIntro => _ru
-      ? '30 случайных карточек из всех грамматических модулей (артикли, местоимения, '
-          'притяжательные, отделяемые глаголы). Ответы сохраняются: темы и конкретные '
-          'вопросы, где вы чаще ошибаетесь, чаще попадут в следующий микс.'
-      : '30 random cards from all grammar modules (articles, pronouns, '
-          'possessives, separable verbs). Answers are saved: topics and questions '
-          'you miss more often appear more in the next mix.';
+      ? '30 случайных карточек из всего пула: der/die/das, артикли по падежам, '
+          'местоимения, притяжательные артикли, отделяемые глаголы. Каждый запуск — '
+          'новая случайная подборка.'
+      : '30 random cards from the full pool: der/die/das, case articles, '
+          'pronouns, possessives, separable verbs. Each run is a new random set.';
   String get mixCumulativeTitle => _ru ? 'Накопленно по модулям' : 'Cumulative by module';
   String mixCumulativeLine(MixedQuizModule m, int right, int wrong) =>
       '${mixedQuizModuleLabel(m)}: ${_ru ? 'верно' : 'correct'} $right, '
@@ -237,6 +235,58 @@ class AppStrings {
     return mixedQuizModuleLabelDe(m);
   }
 
+  // ——— Главный экран: статистика и рекомендации ———
+  String moduleAnswersLine(int total, int percent) => _ru
+      ? '$total ответов · $percent% верно'
+      : '$total answers · $percent% correct';
+
+  String get homeRecoTitle => _ru ? 'Рекомендация' : 'Recommendation';
+
+  String homeRecommendationHeader(List<String> tips) {
+    final buf = StringBuffer('${_ru ? 'Стоит подтянуть' : 'Focus on'}:\n');
+    for (final t in tips) {
+      buf.writeln('• $t');
+    }
+    return buf.toString().trim();
+  }
+
+  String moduleTitleForStats(GrammarStatsModule m) => switch (m) {
+        GrammarStatsModule.mix => moduleMixRu,
+        GrammarStatsModule.derDieDas => moduleArtikelRu,
+        GrammarStatsModule.akkusativArtikel => moduleAkkArtikelRu,
+        GrammarStatsModule.dativArtikel => moduleDatArtikelRu,
+        GrammarStatsModule.personalpronomenAkkusativ => modulePersAkkRu,
+        GrammarStatsModule.personalpronomenDativ => modulePersDatRu,
+        GrammarStatsModule.possessivartikelAkkusativ => modulePossAkkRu,
+        GrammarStatsModule.possessivartikelNominativ => modulePossNomRu,
+        GrammarStatsModule.possessivartikelNomAkk => modulePossNomAkkRu,
+        GrammarStatsModule.trennbareVerben => moduleTrennbarRu,
+      };
+
+  String recommendModuleWeak(GrammarStatsModule m) => _ru
+      ? 'Чаще всего ошибки в теме «${moduleTitleForStats(m)}».'
+      : 'Most mistakes in «${moduleTitleForStats(m)}».';
+
+  String recommendDerDieDasTag(String tag) {
+    final gender = switch (tag) {
+      'der' => _ru ? 'мужской род (der)' : 'masculine (der)',
+      'die' => _ru ? 'женский род (die)' : 'feminine (die)',
+      'das' => _ru ? 'средний род (das)' : 'neuter (das)',
+      _ => tag,
+    };
+    return _ru
+        ? 'Артикли der/die/das: чаще путаете $gender.'
+        : 'Articles der/die/das: review $gender.';
+  }
+
+  String recommendAkkusativTag(String tag) => _ru
+      ? 'Винительный падеж: повторите форму «$tag».'
+      : 'Accusative: review the form «$tag».';
+
+  String recommendDativTag(String tag) => _ru
+      ? 'Дательный падеж: повторите форму «$tag».'
+      : 'Dative: review the form «$tag».';
+
   String sessionRecommendation(Map<MixedQuizModule, int> wrongByModule) {
     final bad = wrongByModule.entries.where((e) => e.value > 0).toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -254,8 +304,8 @@ class AppStrings {
           : '• ${mixedQuizModuleLabel(e.key)} — errors this run: ${e.value}');
     }
     buf.write(_ru
-        ? '\nПри следующем запуске микса чаще будут попадаться вопросы из «слабых» тем и карточек, где вы уже ошибались.'
-        : '\nOn the next mix, questions from weak topics and cards you missed before will appear more often.');
+        ? '\nПовторите эти темы в отдельных разделах или запустите микс снова.'
+        : '\nReview these topics in their sections or run the mix again.');
     return buf.toString();
   }
 

@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import '../../data/personalpronomen_dativ_questions.dart';
 import '../../data/personalpronomen_dativ_theory.dart';
 import '../../l10n/app_locale_scope.dart';
+import '../../services/grammar_stats_service.dart';
 import '../../utils/artikel_stats_feedback.dart';
+import '../../utils/record_grammar_answer.dart';
 import '../../widgets/language_switch_button.dart';
 import '../../widgets/theory_tab_content.dart';
 
@@ -55,7 +57,14 @@ class _PersonalpronomenDativScreenState extends State<PersonalpronomenDativScree
 
   void _select(int i) {
     if (_showResult || _current == null) return;
-    final ok = i == _current!.correctIndex;
+    final q = _current!;
+    final ok = i == q.correctIndex;
+    recordGrammarAnswer(
+      module: GrammarStatsModule.personalpronomenDativ,
+      ok: ok,
+      options: q.options,
+      correctIndex: q.correctIndex,
+    );
     setState(() {
       _picked = i;
       _showResult = true;
