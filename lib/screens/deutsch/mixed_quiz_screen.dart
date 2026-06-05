@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import '../../l10n/app_locale.dart';
 import '../../l10n/app_locale_scope.dart';
 import '../../services/grammar_stats_service.dart';
 import '../../services/mixed_quiz_repository.dart';
+import '../../services/yandex_interstitial_service.dart';
 import '../../theme/apple_theme.dart';
 import '../../widgets/language_switch_button.dart';
 import '../../widgets/module_stats_bar.dart';
@@ -134,7 +136,10 @@ class _MixedQuizScreenState extends State<MixedQuizScreen> {
         finished = true;
       }
     });
-    if (finished) _loadStats();
+    if (finished) {
+      _loadStats();
+      unawaited(YandexInterstitialService.instance.showIfReady());
+    }
   }
 
   String _weiterLabel(BuildContext context) {
