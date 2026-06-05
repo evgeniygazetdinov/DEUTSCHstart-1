@@ -50,7 +50,8 @@ android {
         applicationId = "com.example.test_deutsch_start"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdkVersion = flutter.minSdkVersion
+        // Yandex Mobile Ads SDK требует API 23+.
+        minSdkVersion = Math.max(flutter.minSdkVersion, 23)
         targetSdk = flutter.targetSdkVersion
         if (isReleaseArtifactBuild) {
             versionCode = releaseBuildNumber

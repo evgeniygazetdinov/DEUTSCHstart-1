@@ -163,36 +163,40 @@ class _ArtikelScreenState extends State<ArtikelScreen>
         children: [
           _buildTheoryTab(context),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              child: _atEnd
-                  ? _buildDone(context)
-                  : SingleChildScrollView(
-                      child: _buildQuestion(context, scheme),
-                    ),
-            ),
+            child: _atEnd
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                    child: _buildDone(context),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                          child: _buildQuestion(context, scheme),
+                        ),
+                      ),
+                      if (_showResult)
+                        Material(
+                          elevation: 6,
+                          color: scheme.surface,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: _next,
+                                child: Text(_weiterButtonLabel(context)),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
           ),
         ],
       ),
-      bottomNavigationBar: onUebungen && !_atEnd && _showResult
-          ? Material(
-              elevation: 6,
-              color: scheme.surface,
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _next,
-                      child: Text(_weiterButtonLabel(context)),
-                    ),
-                  ),
-                ),
-              ),
-            )
-          : null,
     );
   }
 
