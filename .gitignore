@@ -38,6 +38,9 @@ migrate_working_dir/
 # Копии релизных APK/AAB из Gradle (см. android/app/build.gradle)
 /dist/
 
+# Боевые ID Яндекс-рекламы (шаблон: lib/config/yandex_ads_secrets.example.dart)
+/lib/config/yandex_ads_secrets.dart
+
 # Symbolication related
 app.*.symbols
 

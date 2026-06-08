@@ -312,18 +312,36 @@ class _ArtikelScreenState extends State<ArtikelScreen>
               ),
               const SizedBox(height: 12),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Text(
-                      q.prompt,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w800,
-                        height: 1.15,
-                        color: Color(0xFF000000),
-                      ),
+                    child: Column(
+                      children: [
+                        Text(
+                          q.prompt,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w800,
+                            height: 1.15,
+                            color: Color(0xFF000000),
+                          ),
+                        ),
+                        if (q.translationRu.trim().isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            q.translationRu,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                              height: 1.25,
+                              fontStyle: FontStyle.italic,
+                              color: Color(0xFF3C3C43),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   IconButton.filledTonal(
