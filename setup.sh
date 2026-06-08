@@ -74,6 +74,14 @@ flutter doctor
 echo -e "\n${YELLOW}Очистка проекта...${NC}"
 flutter clean
 
+# Секреты рекламы (не в Git)
+YANDEX_SECRETS="${ROOT_DIR}/lib/config/yandex_ads_secrets.dart"
+YANDEX_SECRETS_EXAMPLE="${ROOT_DIR}/lib/config/yandex_ads_secrets.example.dart"
+if [ ! -f "$YANDEX_SECRETS" ]; then
+    cp "$YANDEX_SECRETS_EXAMPLE" "$YANDEX_SECRETS"
+    echo -e "${YELLOW}Создан ${YANDEX_SECRETS} — впишите R-M-… из partner.yandex.ru${NC}"
+fi
+
 # Получение зависимостей
 echo -e "\n${YELLOW}Установка зависимостей...${NC}"
 flutter pub get
@@ -86,9 +94,28 @@ dart run flutter_launcher_icons
 echo -e "\n${YELLOW}Проверка на ошибки...${NC}"
 flutter analyze
 
-# Сборка APK
+# Сборка APK — боевой ID из env или из yandex_ads_secrets.dart
 echo -e "\n${YELLOW}Сборка APK...${NC}"
-flutter build apk
+DART_DEFINES=()
+_read_ad_id_from_secrets() {
+    local key="$1"
+    if [ -f "$YANDEX_SECRETS" ]; then
+        grep -E "${key}[[:space:]]*=" "$YANDEX_SECRETS" 2>/dev/null \
+            | head -1 \
+            | sed -E "s/.*=[[:space:]]*'([^']*)'.*/\1/"
+    fi
+}
+_BANNER_ID="${YANDEX_BANNER_AD_UNIT_ID:-$(_read_ad_id_from_secrets bannerAdUnitId)}"
+_INTERSTITIAL_ID="${YANDEX_INTERSTITIAL_AD_UNIT_ID:-$(_read_ad_id_from_secrets interstitialAdUnitId)}"
+if [ -n "$_BANNER_ID" ]; then
+    DART_DEFINES+=(--dart-define="YANDEX_BANNER_AD_UNIT_ID=${_BANNER_ID}")
+    echo -e "Yandex banner: ${GREEN}${_BANNER_ID}${NC}"
+fi
+if [ -n "$_INTERSTITIAL_ID" ]; then
+    DART_DEFINES+=(--dart-define="YANDEX_INTERSTITIAL_AD_UNIT_ID=${_INTERSTITIAL_ID}")
+    echo -e "Yandex interstitial: ${GREEN}${_INTERSTITIAL_ID}${NC}"
+fi
+flutter build apk "${DART_DEFINES[@]}"
 
 if [ $? -eq 0 ]; then
     echo -e "\n${GREEN}Установка успешно завершена!${NC}"

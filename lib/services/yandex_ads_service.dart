@@ -19,7 +19,8 @@ abstract final class YandexAdsService {
 
   static Future<void> initialize() async {
     if (!isSupported || _initialized) return;
-    await YandexAds.setDebugErrorIndicator(kDebugMode);
+    // Красная плашка SDK при ошибке — помогает на устройстве (adb logcat тоже).
+    await YandexAds.setDebugErrorIndicator(true);
     await YandexAds.initialize();
     _initialized = true;
     // Не блокируем старт приложения — баннер важнее.

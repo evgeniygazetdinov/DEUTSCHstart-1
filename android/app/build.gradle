@@ -75,6 +75,10 @@ flutter {
     source = "../.."
 }
 
+dependencies {
+    implementation 'com.yandex.android:mobileads:8.0.0'
+}
+
 // Копия APK/AAB в dist/ после сборки (finalizedBy — иначе APK ещё не на месте)
 tasks.register("copyReleaseApkToDist") {
     group = "release"

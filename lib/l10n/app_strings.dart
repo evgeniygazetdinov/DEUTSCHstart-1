@@ -156,12 +156,12 @@ class AppStrings {
   // ——— Artikel (der/die/das) ———
   String get artikelAppBar => 'Artikel — der / die / das';
   String get artikelTheoryIntro => _ru
-      ? 'Nominativ (A1): определённый артикль. Вторая вкладка — карточки: слово и выбор der / die / das.'
-      : 'Nominative (A1): definite article. Second tab — word cards and der / die / das choice.';
+      ? 'Nominativ (A1): определённый артикль. Вторая вкладка — карточки: слово с переводом и выбор der / die / das.'
+      : 'Nominative (A1): definite article. Second tab — word with translation and der / die / das choice.';
   String get artikelExerciseHint => _ru
-      ? 'Выберите артикль для слова. Динамик произносит только немецкое слово, без артикля. '
+      ? 'Под словом — перевод на русский. Выберите артикль. Динамик произносит только немецкое слово, без артикля. '
           'При ошибке карточка вернётся позже в очередь.'
-      : 'Choose the article for the word. Audio plays the German word only, without the article. '
+      : 'Russian translation under the word. Choose the article. Audio plays the German word only, without the article. '
           'Wrong cards return to the queue later.';
   String get welcherArtikel => _ru ? 'Какой артикль?' : 'Which article?';
   String get antwort => _ru ? 'Ответ' : 'Answer';
