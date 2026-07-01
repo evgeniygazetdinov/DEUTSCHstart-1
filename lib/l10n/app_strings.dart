@@ -112,6 +112,7 @@ class AppStrings {
   String get modulePossNomAkkRu =>
       _ru ? 'Притяжательные: Nom. и Akk.' : 'Possessive: nom. vs. acc.';
   String get moduleTrennbarRu => _ru ? 'Отделяемые глаголы' : 'Separable verbs';
+  String get moduleZahlenRu => _ru ? 'Числа и время' : 'Numbers & time';
 
   String get subHoeren => _ru
       ? 'Диалоги и объявления: правильная картинка, richtig/falsch или выбор.'
@@ -152,6 +153,31 @@ class AppStrings {
   String get subTrennbar => _ru
       ? 'A1: теория + 150 заданий (Präfix am Ende: aufstehen, anrufen, einkaufen …).'
       : 'A1: theory + 150 tasks (prefix at end: aufstehen, anrufen, einkaufen …).';
+  String get subZahlen => _ru
+      ? 'Случайные числа (0–999), время, Komma и годы: каждый вопрос заново.'
+      : 'Random numbers (0–999), clock, decimals, and years: fresh each question.';
+
+  // ——— Artikel (der/die/das) ———
+  // ——— Zahlen & Uhrzeit ———
+  String get zahlenUhrzeitAppBar => 'Zahlen & Uhrzeit';
+  String get zahlenUhrzeitTheoryIntro => _ru
+      ? 'Числа, время, десятичные дроби (Komma) и годы. Вторая вкладка — случайные задания: '
+          'цифра, часы, число с запятой или год; три варианта ответа по-немецки.'
+      : 'Numbers, time, decimals (Komma), and years. Second tab — random tasks: '
+          'a digit, clock, decimal, or year; three German answer choices.';
+  String get zahlenUhrzeitExerciseHint => _ru
+      ? 'Выберите правильный немецкий вариант. При ошибке задание вернётся в очередь. '
+          'Кнопка shuffle — новая случайная сессия.'
+      : 'Pick the correct German form. Wrong tasks return to the queue. '
+          'Shuffle starts a new random session.';
+  String get zahlenPromptNumber =>
+      _ru ? 'Как это число по-немецки?' : 'How is this number in German?';
+  String get zahlenPromptClock =>
+      _ru ? 'Какое сейчас время?' : 'What time is it?';
+  String get zahlenPromptDecimal =>
+      _ru ? 'Как прочитать это число?' : 'How do you read this number?';
+  String get zahlenPromptYear =>
+      _ru ? 'Как этот год по-немецки?' : 'How is this year in German?';
 
   // ——— Artikel (der/die/das) ———
   String get artikelAppBar => 'Artikel — der / die / das';
@@ -261,6 +287,7 @@ class AppStrings {
         GrammarStatsModule.possessivartikelNominativ => modulePossNomRu,
         GrammarStatsModule.possessivartikelNomAkk => modulePossNomAkkRu,
         GrammarStatsModule.trennbareVerben => moduleTrennbarRu,
+        GrammarStatsModule.zahlenUhrzeit => moduleZahlenRu,
       };
 
   String recommendModuleWeak(GrammarStatsModule m) => _ru

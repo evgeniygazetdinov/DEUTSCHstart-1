@@ -17,6 +17,7 @@ import 'deutsch/possessivartikel_nominativ_screen.dart';
 import 'deutsch/possessivartikel_nom_akk_screen.dart';
 import 'deutsch/trennbare_verben_screen.dart';
 import 'deutsch/mixed_quiz_screen.dart';
+import 'deutsch/zahlen_uhrzeit_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -44,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static const _statsModules = [
     GrammarStatsModule.mix,
     GrammarStatsModule.derDieDas,
+    GrammarStatsModule.zahlenUhrzeit,
     GrammarStatsModule.akkusativArtikel,
     GrammarStatsModule.dativArtikel,
     GrammarStatsModule.personalpronomenAkkusativ,
@@ -93,6 +95,13 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: Icons.article_outlined,
         subtitle: s.subArtikel,
         page: const ArtikelScreen(),
+      ),
+      _ModuleEntry(
+        titleDe: 'Zahlen & Uhrzeit',
+        titleLocalized: s.moduleZahlenRu,
+        icon: Icons.schedule_outlined,
+        subtitle: s.subZahlen,
+        page: const ZahlenUhrzeitScreen(),
       ),
       _ModuleEntry(
         titleDe: 'Artikel im Akkusativ',

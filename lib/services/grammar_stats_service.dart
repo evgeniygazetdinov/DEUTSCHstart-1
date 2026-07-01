@@ -17,6 +17,7 @@ enum GrammarStatsModule {
   possessivartikelNominativ,
   possessivartikelNomAkk,
   trennbareVerben,
+  zahlenUhrzeit,
 }
 
 class GrammarModuleStats {
